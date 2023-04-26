@@ -10,8 +10,9 @@ public class LoyaltyGroup
     public string Name { get; set; }
     [Required]
     public int Threshold { get; set; }
-    public string Image { get; set; }
+    public string? Image { get; set; }
 
     public ICollection<Product> Products { get; set; }
     public ICollection<LoyaltyScheme> LoyaltySchemes { get; set;}
+
 }

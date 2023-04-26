@@ -28,4 +28,8 @@
     <None Include="C:\Users\lee\Desktop\College\Project\Project\Project\L00177784_Project\.editorconfig" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Migrations\" />
+  </ItemGroup>
+
 </Project>

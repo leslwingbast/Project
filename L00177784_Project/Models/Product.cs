@@ -8,12 +8,13 @@ public class Product
     [Key]
     public int Id { get; set; }
 
-    public string Barcode { get; set; }
+    public string? Barcode { get; set; }
 
-    public int Sku { get; set; }
+    public int? Sku { get; set; }
+    [Required]
     public string Name { get; set; }
     public int? LoyaltyGroup_Id { get; set; }
     [ForeignKey("LoyaltyGroup_Id")]
-    public virtual LoyaltyGroup LoyaltyGroup { get; set; }
+    public virtual LoyaltyGroup? LoyaltyGroup { get; set; }
 
 }
