@@ -12,7 +12,7 @@ public class LoyaltyGroup
     public int Threshold { get; set; }
     public string? Image { get; set; }
 
-    public ICollection<Product> Products { get; set; }
-    public ICollection<LoyaltyScheme> LoyaltySchemes { get; set;}
+    public ICollection<Product>? Products { get; set; }
+    public ICollection<LoyaltyScheme>? LoyaltySchemes { get; set;}
 
 }

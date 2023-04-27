@@ -3,6 +3,7 @@ using System;
 using L00177784_Project.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace L00177784_Project.Migrations
 {
     [DbContext(typeof(LoyaltyGroupsContext))]
-    partial class LoyaltyGroupsContextModelSnapshot : ModelSnapshot
+    [Migration("20230427130857_AddSalesModel")]
+    partial class AddSalesModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "7.0.5");
@@ -109,9 +112,6 @@ namespace L00177784_Project.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("IsFree")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("Processed")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("Qty")

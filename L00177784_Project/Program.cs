@@ -1,5 +1,7 @@
 using L00177784_Project.Data;
 using Microsoft.EntityFrameworkCore;
+using L00177784_Project.Models;
+using L00177784_Project.Controllers;
 
 var builder = WebApplication.CreateBuilder(args);
 
