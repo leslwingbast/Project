@@ -1,7 +1,6 @@
 ﻿using L00177784_Project.Data;
 using L00177784_Project.Models;
 
-
 namespace L00177784_Project.Services.SaleService;
 
 public class SaleService : ISaleService
@@ -24,13 +23,14 @@ public class SaleService : ISaleService
         {
             if (saleToProcess.IsFree != true)
             {
-                LoyaltyContext.SaveChanges();
+                saleToProcess.Processed = true;
+                LoyaltyContext.Sales.Update(saleToProcess);
                 return UdateScheme(selectedScheme, saleToProcess.Qty, (int)selectedScheme.RemainingItems);
             }
             else
             {
                 saleToProcess.Processed = true;
-                LoyaltyContext.SaveChanges();
+                LoyaltyContext.Sales.Update(saleToProcess);
                 return ResetScheme(selectedScheme, saleToProcess.DateTime);
             }
         }

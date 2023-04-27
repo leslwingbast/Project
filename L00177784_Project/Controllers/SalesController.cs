@@ -9,6 +9,7 @@ using L00177784_Project.Data;
 using L00177784_Project.Models;
 using L00177784_Project.Services;
 using L00177784_Project.Services.SaleService;
+using System.Net;
 
 namespace L00177784_Project.Controllers
 {
@@ -96,7 +97,15 @@ namespace L00177784_Project.Controllers
             await _context.SaveChangesAsync();
             ISaleService saleService = new SaleService(_context);
             var loyaltyScheme = saleService.ProcessSale(sale);
-            return CreatedAtAction("GetSale", new { id = sale.Id }, sale);
+            if (loyaltyScheme == null)
+            {
+                return NotFound("Sale not processed");
+            }
+            else 
+            {
+                return CreatedAtAction("GetSale", new { id = sale.Id }, sale);
+            }
+            
         }
 
         // DELETE: api/Sales/5
