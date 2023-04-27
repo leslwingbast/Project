@@ -1,15 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
+﻿using L00177784_Project.Data;
+using L00177784_Project.Models;
+using L00177784_Project.Services.SaleService;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using L00177784_Project.Data;
-using L00177784_Project.Models;
-using L00177784_Project.Services;
-using L00177784_Project.Services.SaleService;
-using System.Net;
 
 namespace L00177784_Project.Controllers
 {

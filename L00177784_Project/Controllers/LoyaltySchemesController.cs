@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
+﻿using L00177784_Project.Data;
+using L00177784_Project.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using L00177784_Project.Data;
-using L00177784_Project.Models;
+using System.Drawing.Text;
 
 namespace L00177784_Project.Controllers
 {
@@ -48,6 +44,19 @@ namespace L00177784_Project.Controllers
             }
 
             return loyaltyScheme;
+        }
+
+        // GET: api/LoyaltySchemes/CustomerID/5
+        [HttpGet("Customer/{customer_id}")]
+        public async Task<ActionResult<IEnumerable<LoyaltyScheme>>> GetCustomerLoyaltyScheme(int customer_id)
+        {
+            if (_context.LoyaltySchemes == null)
+            {
+                return NotFound();
+            }
+            var schemes = _context.LoyaltySchemes.Where(x => x.CustomerId == customer_id).ToList();
+            return schemes;
+
         }
 
         // PUT: api/LoyaltySchemes/5
