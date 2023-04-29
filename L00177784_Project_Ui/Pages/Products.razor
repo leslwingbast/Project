@@ -1,0 +1,82 @@
+﻿@page "/products"
+
+@using System.Text.Json
+@using System.Text.Json.Serialization
+@inject IHttpClientFactory ClientFactory
+
+
+<PageTitle>Products</PageTitle>
+
+<h1>Products</h1>
+<table class="table">
+    <thead>
+        <tr>
+            <td>ID</td>
+            <td>Sku</td>
+            <td>Name</td>
+            <td>Barcode</td>
+            <td>Group</td>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var product in products)
+        {
+            <tr>
+                <td>@product.id</td>
+                <td>@product.sku</td>
+                <td>@product.name</td>
+                <td>@product.barcode</td>
+                <td>@product.loyaltyGroup_Id</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+
+@code {
+    private List<ProductData> products = new();
+
+    private readonly string AllProducts = "https://localhost:7240/api/Products";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await APICall(AllProducts);
+    }
+
+    private async Task APICall(string endpoint)
+    {
+        var request = new HttpRequestMessage(
+                        HttpMethod.Get,
+                        endpoint
+                    );
+
+        var client = ClientFactory.CreateClient();
+
+        var response = await client.SendAsync(request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var stream = await response.Content.ReadAsStreamAsync();
+            products = await JsonSerializer.DeserializeAsync<List<ProductData>>(stream);
+        }
+        else
+        {
+            // TODO: Handle error - display message
+            Console.WriteLine("Something went wrong - Please try again later...");
+        }
+        StateHasChanged();
+    }
+
+
+
+    public class ProductData
+    {
+        public int id { get; set; }
+        public string barcode { get; set; }
+        public int sku { get; set; }
+        public string name { get; set; }
+        public int loyaltyGroup_Id { get; set; }
+        public object loyaltyGroup { get; set; }
+    
+    }
+}
