@@ -6,12 +6,18 @@ using System.Drawing.Text;
 
 namespace L00177784_Project.Controllers
 {
+    /// <summary>
+    /// 
+    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class LoyaltySchemesController : ControllerBase
     {
         private readonly LoyaltyGroupsContext _context;
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="context"></param>
         public LoyaltySchemesController(LoyaltyGroupsContext context)
         {
             _context = context;
@@ -46,7 +52,7 @@ namespace L00177784_Project.Controllers
             return loyaltyScheme;
         }
 
-        // GET: api/LoyaltySchemes/CustomerID/5
+        // GET: api/LoyaltySchemes/Customer/5
         [HttpGet("Customer/{customer_id}")]
         public async Task<ActionResult<IEnumerable<LoyaltyScheme>>> GetCustomerLoyaltyScheme(int customer_id)
         {
