@@ -2,12 +2,11 @@
 using L00177784_Project.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Drawing.Text;
 
 namespace L00177784_Project.Controllers
 {
     /// <summary>
-    /// 
+    /// Controller for Loyalty Schemes to access from a front end
     /// </summary>
     [Route("api/[controller]")]
     [ApiController]
@@ -15,15 +14,19 @@ namespace L00177784_Project.Controllers
     {
         private readonly LoyaltyGroupsContext _context;
         /// <summary>
-        /// 
+        /// Constructor to access the database
         /// </summary>
-        /// <param name="context"></param>
+        /// <param name="context">DBConext for database</param>
         public LoyaltySchemesController(LoyaltyGroupsContext context)
         {
             _context = context;
         }
 
         // GET: api/LoyaltySchemes
+        /// <summary>
+        /// Endpoint to get list of Loyalty Schemes
+        /// </summary>
+        /// <returns>List of loyalty schemes in database</returns>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<LoyaltyScheme>>> GetLoyaltySchemes()
         {
@@ -35,6 +38,11 @@ namespace L00177784_Project.Controllers
         }
 
         // GET: api/LoyaltySchemes/5
+        /// <summary>
+        /// Endpoint to get a loyaltyscheme by Id
+        /// </summary>
+        /// <param name="id">Id of loyalty scheme to be returned</param>
+        /// <returns>Object of type LoyaltyScheme</returns>
         [HttpGet("{id}")]
         public async Task<ActionResult<LoyaltyScheme>> GetLoyaltyScheme(int id)
         {
@@ -52,7 +60,13 @@ namespace L00177784_Project.Controllers
             return loyaltyScheme;
         }
 
+
         // GET: api/LoyaltySchemes/Customer/5
+        /// <summary>
+        /// Endpoint to return all schemes connected to customer Id
+        /// </summary>
+        /// <param name="customer_id">Id of customer to return schemes for</param>
+        /// <returns></returns>
         [HttpGet("Customer/{customer_id}")]
         public async Task<ActionResult<IEnumerable<LoyaltyScheme>>> GetCustomerLoyaltyScheme(int customer_id)
         {
@@ -66,7 +80,12 @@ namespace L00177784_Project.Controllers
         }
 
         // PUT: api/LoyaltySchemes/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        /// <summary>
+        /// Endpoint to update a loyalty scheme
+        /// </summary>
+        /// <param name="id">Id of loyalty scheme to update</param>
+        /// <param name="loyaltyScheme">Object of type LoyaltyScheme</param>
+        /// <returns>Taks Complete</returns>
         [HttpPut("{id}")]
         public async Task<IActionResult> PutLoyaltyScheme(int id, LoyaltyScheme loyaltyScheme)
         {
@@ -97,7 +116,11 @@ namespace L00177784_Project.Controllers
         }
 
         // POST: api/LoyaltySchemes
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        /// <summary>
+        /// Endpoint to create Loyalty Scheme in the database
+        /// </summary>
+        /// <param name="loyaltyScheme">Object of type LoyaltyScheme</param>
+        /// <returns>Saved Loyalty Scheme</returns>
         [HttpPost]
         public async Task<ActionResult<LoyaltyScheme>> PostLoyaltyScheme(LoyaltyScheme loyaltyScheme)
         {
@@ -112,6 +135,11 @@ namespace L00177784_Project.Controllers
         }
 
         // DELETE: api/LoyaltySchemes/5
+        /// <summary>
+        /// Endpoint to delete a loyalty scheme
+        /// </summary>
+        /// <param name="id">Id of loyalty scheme to be deleted</param>
+        /// <returns>Task Done</returns>
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteLoyaltyScheme(int id)
         {
@@ -131,6 +159,11 @@ namespace L00177784_Project.Controllers
             return NoContent();
         }
 
+        /// <summary>
+        /// Private method to see if a scheme exists
+        /// </summary>
+        /// <param name="id">Id of scheme to check</param>
+        /// <returns>Boolean whether scheme exists or not</returns>
         private bool LoyaltySchemeExists(int id)
         {
             return (_context.LoyaltySchemes?.Any(e => e.Id == id)).GetValueOrDefault();
