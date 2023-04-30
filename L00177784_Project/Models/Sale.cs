@@ -1,9 +1,12 @@
 ﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace L00177784_Project.Models
 {
+    /// <summary>
+    /// Model for Sale
+    /// This will hold the details from a sale in order to update the loyalty schemes
+    /// </summary>
     public class Sale
     {
         [Key]

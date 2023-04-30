@@ -2,22 +2,27 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace L00177784_Project.Models;
-
-public class LoyaltyScheme
+namespace L00177784_Project.Models
 {
-    [Key]
-    public int Id { get; set; }
-    
-    [Required]
-    public string GroupName { get; set; }
-    public int? RemainingItems { get; set; }
-    
-    [DefaultValue(null)]
-    public DateTime? LastFreeBag { get; set; }
-    public int CustomerId { get; set; }
-    public int? LoyaltyGroup_Id { get; set; }
-    [ForeignKey("LoyaltyGroup_Id")]
-    public LoyaltyGroup? LoyaltyGroup { get; set; }
+    /// <summary>
+    /// Model of type Loyalty Scheme
+    /// This will hold the individual customers loyalty scheme(s)
+    /// </summary>
+    public class LoyaltyScheme
+    {
+        [Key]
+        public int Id { get; set; }
 
+        [Required]
+        public string GroupName { get; set; }
+        public int? RemainingItems { get; set; }
+
+        [DefaultValue(null)]
+        public DateTime? LastFreeBag { get; set; }
+        public int CustomerId { get; set; }
+        public int? LoyaltyGroup_Id { get; set; }
+        [ForeignKey("LoyaltyGroup_Id")]
+        public LoyaltyGroup? LoyaltyGroup { get; set; }
+
+    }
 }

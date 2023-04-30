@@ -1,10 +1,9 @@
 using L00177784_Project.Data;
 using Microsoft.EntityFrameworkCore;
-using L00177784_Project.Models;
-using L00177784_Project.Controllers;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Connection string for connection to local database
 var connectionString = builder.Configuration.GetConnectionString("LoyaltyGroupsContext");
 
 // Add services to the container.

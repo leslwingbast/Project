@@ -1,20 +1,25 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace L00177784_Project.Models;
-
-public class Product
+namespace L00177784_Project.Models
 {
-    [Key]
-    public int Id { get; set; }
+    /// <summary>
+    /// Model for Product
+    /// This will hold the details of a product including which Loyalty Group it belongs to
+    /// </summary>
+    public class Product
+    {
+        [Key]
+        public int Id { get; set; }
 
-    public string? Barcode { get; set; }
+        public string? Barcode { get; set; }
 
-    public int? Sku { get; set; }
-    [Required]
-    public string Name { get; set; }
-    public int? LoyaltyGroup_Id { get; set; }
-    [ForeignKey("LoyaltyGroup_Id")]
-    public virtual LoyaltyGroup? LoyaltyGroup { get; set; }
+        public int? Sku { get; set; }
+        [Required]
+        public string Name { get; set; }
+        public int? LoyaltyGroup_Id { get; set; }
+        [ForeignKey("LoyaltyGroup_Id")]
+        public virtual LoyaltyGroup? LoyaltyGroup { get; set; }
 
+    }
 }
