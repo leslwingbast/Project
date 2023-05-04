@@ -16,7 +16,7 @@ namespace L00177784_Project.Models
 
         public int? Sku { get; set; }
         [Required]
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
         public int? LoyaltyGroup_Id { get; set; }
         [ForeignKey("LoyaltyGroup_Id")]
         public virtual LoyaltyGroup? LoyaltyGroup { get; set; }

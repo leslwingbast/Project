@@ -172,7 +172,7 @@ namespace L00177784_Project.Controllers
             var saleProduct = _context.Products.First(x => x.Sku == saleToProcess.Sku || x.Barcode == saleToProcess.Barcode);
 
             // Get the loyalty group that product is belonging to
-            var loyaltyGroup = _context.LoyaltyGroups.First(x => x.Products.Contains(saleProduct));
+            var loyaltyGroup = saleProduct.LoyaltyGroup;
 
             // Get the scheme containing the customer and the loyalty group
             var selectedScheme = _context.LoyaltySchemes.FirstOrDefault(x => x.CustomerId == saleToProcess.CustomerId && x.LoyaltyGroup_Id == loyaltyGroup.Id);
@@ -206,7 +206,6 @@ namespace L00177784_Project.Controllers
                 if (saleProduct == null)
                 {
                     Console.WriteLine("Product does not exist!");
-                    return null;
                 }
 
                 // Check if loyalty group exists
