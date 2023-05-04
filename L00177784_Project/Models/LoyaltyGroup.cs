@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 
 namespace L00177784_Project.Models
 {
@@ -13,6 +14,7 @@ namespace L00177784_Project.Models
         [Required]
         public string Name { get; set; } = string.Empty;
         [Required]
+        [DefaultValue(10)]
         public int Threshold { get; set; }
         public string? Image { get; set; }
 

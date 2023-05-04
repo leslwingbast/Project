@@ -39,6 +39,8 @@ namespace L00177784_Project.Controllers
         private bool productBySku = false;
 
         private Product selectedProduct = new Product();
+
+        private LoyaltyGroup selectedLoyaltyGroup = new LoyaltyGroup();
         
         /// <summary>
         /// Endpoint to return all sales
@@ -140,23 +142,25 @@ namespace L00177784_Project.Controllers
                 if (sale.Barcode != null)
                 {
                     productByBarcode = CheckProductByBarcode(sale.Barcode);
-                    if (productByBarcode == true) { GetPRoductByBarcode(sale.Barcode); }
+                    if (productByBarcode == true) { GetProductByBarcode(sale.Barcode); }
                 }
-                if (sale.Sku != null) 
+                else if (sale.Sku != null) 
                 {
                     productBySku = CheckProductBySku((int)sale.Sku);
                     if (productBySku == true) { GetProductBySku((int)sale.Sku); }
                 }
-                if (productByBarcode == false && productBySku == false)
+                else
                 {
                     return Problem("Product can not be found");
                 }
-                if (selectedProduct.LoyaltyGroup == null)
+
+                if (selectedProduct == null || selectedProduct.LoyaltyGroup_Id == null)
                 {
                     return Problem("Product is not in a loyalty Group");
                 }
                 else
                 {
+                    GetLoyaltyGroup((int)selectedProduct.LoyaltyGroup_Id);
                     // Call Processsale method to process sale
                     var scheme = ProcessSale(sale);
                     if (scheme == null)
@@ -214,13 +218,11 @@ namespace L00177784_Project.Controllers
         /// <returns></returns>
         private LoyaltyScheme ProcessSale(Sale saleToProcess)
         {
-            // Get the loyalty group that product is belonging to
-            var loyaltyGroup = selectedProduct.LoyaltyGroup;
 
             // Get the scheme containing the customer and the loyalty group
-            if (loyaltyGroup != null)
+            if (selectedLoyaltyGroup != null)
             {
-                selectedScheme = _context.LoyaltySchemes.FirstOrDefault(x => x.CustomerId == saleToProcess.CustomerId && x.LoyaltyGroup_Id == loyaltyGroup.Id);
+                selectedScheme = _context.LoyaltySchemes.FirstOrDefault(x => x.CustomerId == saleToProcess.CustomerId && x.LoyaltyGroup_Id == selectedLoyaltyGroup.Id);
             }
 
             // Check if a scheme exists for the customer and loyalty group
@@ -251,12 +253,12 @@ namespace L00177784_Project.Controllers
                 // Create a new scheme and assign values
                 var newScheme = new LoyaltyScheme()
                 {
-                    LoyaltyGroup = loyaltyGroup,
+                    LoyaltyGroup = selectedLoyaltyGroup,
                     CustomerId = saleToProcess.CustomerId,
                     LastFreeBag = null,
-                    RemainingItems = loyaltyGroup.Threshold - saleToProcess.Qty,
-                    LoyaltyGroup_Id = loyaltyGroup.Id,
-                    GroupName = loyaltyGroup.Name,
+                    RemainingItems = selectedLoyaltyGroup.Threshold - saleToProcess.Qty,
+                    LoyaltyGroup_Id = selectedLoyaltyGroup.Id,
+                    GroupName = selectedLoyaltyGroup.Name,
                 };
                 // Mark sale as processed and add to database
                 saleToProcess.Processed = true;
@@ -348,10 +350,22 @@ namespace L00177784_Project.Controllers
             selectedProduct = _context.Products.First(x => x.Sku == sku);
         }
 
-        private void GetPRoductByBarcode(string barcode) 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="barcode"></param>
+        private void GetProductByBarcode(string barcode) 
         { 
             selectedProduct = _context.Products.First(x => x.Barcode == barcode);
         }
        
+        /// <summary>
+        /// Method to get loyalty Group by id
+        /// </summary>
+        /// <param name="groupId">Id of loyalty group</param>
+        private void GetLoyaltyGroup(int groupId)
+        {
+            selectedLoyaltyGroup = _context.LoyaltyGroups.First(x => x.Id == groupId);
+        }
     }
 }
