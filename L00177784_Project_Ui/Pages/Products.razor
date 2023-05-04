@@ -123,12 +123,12 @@ else
         {
             return true;
         }
-        else if(productSearch.barcode != null)
+        if(productSearch.barcode != null)
         {
             if (productSearch.barcode.Contains(filterProduct, StringComparison.OrdinalIgnoreCase))
                 return true;
         }
-        else if(productSearch.sku != null)
+        if(productSearch.sku != null)
         {
             var skuString = productSearch.sku.ToString();
             if(skuString != null)
@@ -137,7 +137,7 @@ else
                     return true;
             }
         }
-        else if (productSearch.id.ToString().Contains(filterProduct, StringComparison.OrdinalIgnoreCase))
+        if (productSearch.id.ToString().Contains(filterProduct, StringComparison.OrdinalIgnoreCase))
         {
             return true;
         }
