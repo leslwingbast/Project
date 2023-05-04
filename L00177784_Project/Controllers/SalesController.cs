@@ -24,6 +24,25 @@ namespace L00177784_Project.Controllers
         }
 
         /// <summary>
+        /// Selected scheme to be returned
+        /// </summary>
+        private LoyaltyScheme? selectedScheme;
+
+        /// <summary>
+        /// Boolean to see if product can be found by barcode
+        /// </summary>
+        private bool productByBarcode = false;
+        
+        /// <summary>
+        /// Boolean to see if product can be found by sku
+        /// </summary>
+        private bool productBySku = false;
+
+        private Product selectedProduct = new Product();
+
+        private LoyaltyGroup selectedLoyaltyGroup = new LoyaltyGroup();
+        
+        /// <summary>
         /// Endpoint to return all sales
         /// </summary>
         /// <returns>Lost of sales</returns>
@@ -113,15 +132,46 @@ namespace L00177784_Project.Controllers
             // Add sale to database
             _context.Sales.Add(sale);
             await _context.SaveChangesAsync();
-            // Call sale service to process sale
-            var scheme = ProcessSale(sale);
-            if (scheme == null)
+            
+            if (sale.Sku == null && sale.Barcode == null)
             {
-                return NotFound("Sale not processed");
+                return Problem("Cannot process sale without either a product barcode or product sku");
             }
-            else 
+            else
             {
-                return CreatedAtAction("GetSale", new { id = sale.Id }, sale);
+                if (sale.Barcode != null)
+                {
+                    productByBarcode = CheckProductByBarcode(sale.Barcode);
+                    if (productByBarcode == true) { GetProductByBarcode(sale.Barcode); }
+                }
+                else if (sale.Sku != null) 
+                {
+                    productBySku = CheckProductBySku((int)sale.Sku);
+                    if (productBySku == true) { GetProductBySku((int)sale.Sku); }
+                }
+                else
+                {
+                    return Problem("Product can not be found");
+                }
+
+                if (selectedProduct == null || selectedProduct.LoyaltyGroup_Id == null)
+                {
+                    return Problem("Product is not in a loyalty Group");
+                }
+                else
+                {
+                    GetLoyaltyGroup((int)selectedProduct.LoyaltyGroup_Id);
+                    // Call Processsale method to process sale
+                    var scheme = ProcessSale(sale);
+                    if (scheme == null)
+                    {
+                        return Problem ("Sale not processed");
+                    }
+                    else
+                    {
+                        return CreatedAtAction("GetSale", new { id = sale.Id }, sale);
+                    }
+                }
             }
             
         }
@@ -168,14 +218,12 @@ namespace L00177784_Project.Controllers
         /// <returns></returns>
         private LoyaltyScheme ProcessSale(Sale saleToProcess)
         {
-            // Get the product from barcode or sku
-            var saleProduct = _context.Products.First(x => x.Sku == saleToProcess.Sku || x.Barcode == saleToProcess.Barcode);
-
-            // Get the loyalty group that product is belonging to
-            var loyaltyGroup = saleProduct.LoyaltyGroup;
 
             // Get the scheme containing the customer and the loyalty group
-            var selectedScheme = _context.LoyaltySchemes.FirstOrDefault(x => x.CustomerId == saleToProcess.CustomerId && x.LoyaltyGroup_Id == loyaltyGroup.Id);
+            if (selectedLoyaltyGroup != null)
+            {
+                selectedScheme = _context.LoyaltySchemes.FirstOrDefault(x => x.CustomerId == saleToProcess.CustomerId && x.LoyaltyGroup_Id == selectedLoyaltyGroup.Id);
+            }
 
             // Check if a scheme exists for the customer and loyalty group
             if (selectedScheme != null)
@@ -188,7 +236,7 @@ namespace L00177784_Project.Controllers
                     _context.Sales.Update(saleToProcess);
 
                     // Call method to update the loyalty scheme with amount of bags in sale
-                    return UdateScheme(selectedScheme, saleToProcess.Qty, (int)selectedScheme.RemainingItems);
+                    return UpdateScheme(selectedScheme, saleToProcess.Qty, (int)selectedScheme.RemainingItems);
                 }
                 else
                 {
@@ -202,39 +250,23 @@ namespace L00177784_Project.Controllers
             }
             else
             {
-                // Check if product exists
-                if (saleProduct == null)
+                // Create a new scheme and assign values
+                var newScheme = new LoyaltyScheme()
                 {
-                    Console.WriteLine("Product does not exist!");
-                }
+                    LoyaltyGroup = selectedLoyaltyGroup,
+                    CustomerId = saleToProcess.CustomerId,
+                    LastFreeBag = null,
+                    RemainingItems = selectedLoyaltyGroup.Threshold - saleToProcess.Qty,
+                    LoyaltyGroup_Id = selectedLoyaltyGroup.Id,
+                    GroupName = selectedLoyaltyGroup.Name,
+                };
+                // Mark sale as processed and add to database
+                saleToProcess.Processed = true;
+                _context.LoyaltySchemes.Add(newScheme);
+                _context.SaveChanges();
 
-                // Check if loyalty group exists
-                if (loyaltyGroup != null)
-                {
-                    // Create a new scheme and assign values
-                    var newScheme = new LoyaltyScheme()
-                    {
-                        LoyaltyGroup = loyaltyGroup,
-                        CustomerId = saleToProcess.CustomerId,
-                        LastFreeBag = null,
-                        RemainingItems = loyaltyGroup.Threshold - saleToProcess.Qty,
-                        LoyaltyGroup_Id = loyaltyGroup.Id,
-                        GroupName = loyaltyGroup.Name,
-                    };
-                    // Mark sale as processed and add to database
-                    saleToProcess.Processed = true;
-                    _context.LoyaltySchemes.Add(newScheme);
-                    _context.SaveChanges();
-
-                    // Return new scheme
-                    return newScheme;
-                }
-                else
-                {
-                    // Warning that product is not in a loyalty group
-                    Console.WriteLine("Product is not added to a loyalty group!");
-                    return null;
-                }
+                // Return new scheme
+                return newScheme;
             }
         }
 
@@ -245,7 +277,7 @@ namespace L00177784_Project.Controllers
         /// <param name="quantity">Quantity in sale</param>
         /// <param name="count">Current count of bags left towards free item</param>
         /// <returns></returns>
-        private LoyaltyScheme UdateScheme(LoyaltyScheme currentScheme, int quantity, int count)
+        private LoyaltyScheme UpdateScheme(LoyaltyScheme currentScheme, int quantity, int count)
         {
             if ((count - quantity) > 0)
             {
@@ -267,7 +299,10 @@ namespace L00177784_Project.Controllers
         private LoyaltyScheme ResetScheme(LoyaltyScheme currentScheme, DateTime freeBag)
         {
             // Reset remaining bags to Threshold
-            currentScheme.RemainingItems = currentScheme.LoyaltyGroup.Threshold;
+            if(currentScheme.LoyaltyGroup != null)
+            {
+                currentScheme.RemainingItems = currentScheme.LoyaltyGroup.Threshold;
+            }      
             // Set the date of last free bag
             currentScheme.LastFreeBag = freeBag;
             // Save changes
@@ -276,5 +311,61 @@ namespace L00177784_Project.Controllers
             return currentScheme;
         }
 
+        /// <summary>
+        /// Check if product can be found by Sku
+        /// </summary>
+        /// <param name="sku">Sku of product</param>
+        /// <returns>True if product can be found by sku</returns>
+        private bool CheckProductBySku(int sku)
+        {
+            if (_context.Products.First(x => x.Sku == sku) != null)
+            {
+                return true;
+            }
+            else
+                return false;
+        }
+
+        /// <summary>
+        /// Check if product can be found by Barcode
+        /// </summary>
+        /// <param name="barcode">Barcode to check</param>
+        /// <returns>True if product can be found</returns>
+        private bool CheckProductByBarcode(string barcode)
+        {
+            if (_context.Products.First(x => x.Barcode == barcode) != null)
+            {
+                return true;
+            }
+            else
+                return false;
+        }
+
+        /// <summary>
+        /// Update selectedProduct by sku
+        /// </summary>
+        /// <param name="sku"></param>
+        private void GetProductBySku(int sku)
+        {
+            selectedProduct = _context.Products.First(x => x.Sku == sku);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="barcode"></param>
+        private void GetProductByBarcode(string barcode) 
+        { 
+            selectedProduct = _context.Products.First(x => x.Barcode == barcode);
+        }
+       
+        /// <summary>
+        /// Method to get loyalty Group by id
+        /// </summary>
+        /// <param name="groupId">Id of loyalty group</param>
+        private void GetLoyaltyGroup(int groupId)
+        {
+            selectedLoyaltyGroup = _context.LoyaltyGroups.First(x => x.Id == groupId);
+        }
     }
 }
