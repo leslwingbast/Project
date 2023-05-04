@@ -11,7 +11,7 @@ namespace L00177784_Project.Models
         [Key]
         public int Id { get; set; }
         [Required]
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
         [Required]
         public int Threshold { get; set; }
         public string? Image { get; set; }

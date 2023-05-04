@@ -14,8 +14,8 @@ namespace L00177784_Project.Models
         public int Id { get; set; }
 
         [Required]
-        public string GroupName { get; set; }
-        public int? RemainingItems { get; set; }
+        public string GroupName { get; set; } = string.Empty;
+        public int RemainingItems { get; set; } = default(int);
 
         [DefaultValue(null)]
         public DateTime? LastFreeBag { get; set; }
