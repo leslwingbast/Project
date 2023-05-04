@@ -74,8 +74,9 @@ namespace L00177784_Project.Controllers
             {
                 return NotFound();
             }
-            var schemes = await _context.LoyaltySchemes.Where(x => x.CustomerId == customer_id).ToList();
-            return schemes;
+            var schemes = await _context.LoyaltySchemes.ToListAsync();
+            var customerSchemes = _context.LoyaltySchemes.Where(x => x.CustomerId == customer_id).ToList();
+            return customerSchemes;
 
         }
 

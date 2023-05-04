@@ -11,36 +11,43 @@
 
 
 <div class="row">
-    <input type="text" placeholder="Search by Product ID, Name, Barcode or Sku"
+    <input type="text" placeholder="Search by Product ID, Name, Barcode or Sku" minlength="3"
            @bind="filterProduct"
            @bind:event="oninput" 
     />
 </div>
-<table class="table">
-    <thead>
-        <tr>
-            <td>ID</td>
-            <td>Sku</td>
-            <td>Name</td>
-            <td>Barcode</td>
-            <td>Group</td>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var product in filteredProducts)
-        {
-        if (!IsVisible(product))
-                continue;
-        <tr>
-            <td>@product.id</td>
-            <td>@product.sku</td>
-            <td>@product.name</td>
-            <td>@product.barcode</td>
-            <td>@product.loyaltyGroup_Id</td>
-        </tr>
-        }
-    </tbody>
-</table>
+@if (filteredProducts == null)
+{
+    <p>Loading ....</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <td>ID</td>
+                <td>Sku</td>
+                <td>Name</td>
+                <td>Barcode</td>
+                <td>Group</td>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var product in filteredProducts)
+            {
+            if (!IsVisible(product))
+                    continue;
+            <tr>
+                <td>@product.id</td>
+                <td>@product.sku</td>
+                <td>@product.name</td>
+                <td>@product.barcode</td>
+                <td>@product.loyaltyGroup_Id</td>
+            </tr>
+            }
+        </tbody>
+    </table>
+}
 
 
 @code {
@@ -123,8 +130,12 @@
         }
         else if(productSearch.sku != null)
         {
-            if (productSearch.sku.ToString().Contains(filterProduct, StringComparison.OrdinalIgnoreCase))
-                return true;
+            var skuString = productSearch.sku.ToString();
+            if(skuString != null)
+            {
+                if (skuString.Contains(filterProduct, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
         }
         else if (productSearch.id.ToString().Contains(filterProduct, StringComparison.OrdinalIgnoreCase))
         {
