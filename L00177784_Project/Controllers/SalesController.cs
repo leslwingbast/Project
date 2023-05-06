@@ -223,51 +223,53 @@ namespace L00177784_Project.Controllers
             if (selectedLoyaltyGroup != null)
             {
                 selectedScheme = _context.LoyaltySchemes.FirstOrDefault(x => x.CustomerId == saleToProcess.CustomerId && x.LoyaltyGroup_Id == selectedLoyaltyGroup.Id);
+
             }
-
-            // Check if a scheme exists for the customer and loyalty group
-            if (selectedScheme != null)
-            {
-                // Check if the bag in the sale was free
-                if (saleToProcess.IsFree != true)
+                // Check if a scheme exists for the customer and loyalty group
+                if (selectedScheme != null)
                 {
-                    // Update the sale as processed and save
-                    saleToProcess.Processed = true;
-                    _context.Sales.Update(saleToProcess);
+                    // Check if the bag in the sale was free
+                    if (saleToProcess.IsFree != true)
+                    {
+                        // Update the sale as processed and save
+                        saleToProcess.Processed = true;
+                        _context.Sales.Update(saleToProcess);
 
-                    // Call method to update the loyalty scheme with amount of bags in sale
-                    return UpdateScheme(selectedScheme, saleToProcess.Qty, (int)selectedScheme.RemainingItems);
+                        // Call method to update the loyalty scheme with amount of bags in sale
+                        return UpdateScheme(selectedScheme, saleToProcess.Qty, (int)selectedScheme.RemainingItems);
+                    }
+                    else
+                    {
+                        // Update sale as processed and save
+                        saleToProcess.Processed = true;
+                        _context.Sales.Update(saleToProcess);
+
+                        // Reset the scheme to 0 and update the time the last free item was given
+                        return ResetScheme(selectedScheme, saleToProcess.DateTime);
+                    }
                 }
                 else
                 {
-                    // Update sale as processed and save
+                    // Create a new scheme and assign values
+                    var newScheme = new LoyaltyScheme()
+                    {
+                        LoyaltyGroup = selectedLoyaltyGroup,
+                        CustomerId = saleToProcess.CustomerId,
+                        LastFreeBag = null,
+                        RemainingItems = selectedLoyaltyGroup.Threshold - saleToProcess.Qty,
+                        LoyaltyGroup_Id = selectedLoyaltyGroup.Id,
+                        GroupName = selectedLoyaltyGroup.Name,
+                    };
+
+                    // Mark sale as processed and add to database
                     saleToProcess.Processed = true;
-                    _context.Sales.Update(saleToProcess);
+                    _context.LoyaltySchemes.Add(newScheme);
+                    _context.SaveChanges();
 
-                    // Reset the scheme to 0 and update the time the last free item was given
-                    return ResetScheme(selectedScheme, saleToProcess.DateTime);
+                    // Return new scheme
+                    return newScheme;
                 }
-            }
-            else
-            {
-                // Create a new scheme and assign values
-                var newScheme = new LoyaltyScheme()
-                {
-                    LoyaltyGroup = selectedLoyaltyGroup,
-                    CustomerId = saleToProcess.CustomerId,
-                    LastFreeBag = null,
-                    RemainingItems = selectedLoyaltyGroup.Threshold - saleToProcess.Qty,
-                    LoyaltyGroup_Id = selectedLoyaltyGroup.Id,
-                    GroupName = selectedLoyaltyGroup.Name,
-                };
-                // Mark sale as processed and add to database
-                saleToProcess.Processed = true;
-                _context.LoyaltySchemes.Add(newScheme);
-                _context.SaveChanges();
-
-                // Return new scheme
-                return newScheme;
-            }
+            
         }
 
         /// <summary>

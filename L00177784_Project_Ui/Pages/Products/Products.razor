@@ -1,5 +1,6 @@
 ﻿@page "/products"
 
+@using Data
 @using System.Text.Json
 @using System.Text.Json.Serialization
 @inject IHttpClientFactory ClientFactory
@@ -8,7 +9,7 @@
 <PageTitle>Products</PageTitle>
 
 <h1>Products</h1>
-
+<a class="btn btn-success" href="/products/create"><i class="oi oi-plus"></i> Create New Product</a>
 
 <div class="row">
     <input type="text" placeholder="Search by Product ID, Name, Barcode or Sku" minlength="3"
@@ -16,7 +17,7 @@
            @bind:event="oninput" 
     />
 </div>
-@if (filteredProducts == null)
+@if (allProducts == null || filteredProducts == null)
 {
     <p>Loading ....</p>
 }
@@ -33,17 +34,24 @@ else
             </tr>
         </thead>
         <tbody>
-            @foreach (var product in filteredProducts)
+            @foreach (var currentProduct in filteredProducts)
             {
-            if (!IsVisible(product))
+                if (!IsVisible(currentProduct))
                     continue;
             <tr>
-                <td>@product.id</td>
-                <td>@product.sku</td>
-                <td>@product.name</td>
-                <td>@product.barcode</td>
-                <td>@product.loyaltyGroup_Id</td>
-            </tr>
+                    <td>@currentProduct.id</td>
+                    <td>@currentProduct.sku</td>
+                    <td>@currentProduct.name</td>
+                    <td>@currentProduct.barcode</td>
+                    @if (currentProduct.productLoyaltyGroup != null)
+                    {
+                        <td>@currentProduct.productLoyaltyGroup.name</td>
+                    }
+                    else
+                    {
+                        <td>@currentProduct.loyaltyGroup_Id</td>
+                    }
+                </tr>
             }
         </tbody>
     </table>
@@ -54,7 +62,8 @@ else
     /// <summary>
     /// Lists for full list of products and filtered products
     /// </summary>
-    private List<ProductData>? allProducts, filteredProducts = new List<ProductData>();
+    private List<Product>? allProducts, filteredProducts = new List<Product>();
+    private List<LoyaltyGroup>? allLoyaltyGroups = new List<LoyaltyGroup>();
 
     /// <summary>
     /// String to hold text when searching for a product
@@ -64,7 +73,9 @@ else
     /// <summary>
     /// Endpoint for all getting products
     /// </summary>
-    private readonly string AllProducts = "https://localhost:7240/api/Products";
+    private readonly string allProductsEndpoint = "https://localhost:7240/api/Products";
+
+    private string allLoyaltyGroupsEndpoint = "https://localhost:7240/api/LoyaltyGroups";
 
     /// <summary>
     /// Initialisation of the page
@@ -72,8 +83,9 @@ else
     /// <returns></returns>
     protected override async Task OnInitializedAsync()
     {
-        await InitialAPICall(AllProducts);
-        filteredProducts = allProducts;
+        await LoyaltyAPICall();
+        await ProductAPICall();
+
     }
 
 
@@ -83,11 +95,11 @@ else
     /// </summary>
     /// <param name="endpoint">Endpoint to be called by the API</param>
     /// <returns></returns>
-    private async Task InitialAPICall(string endpoint)
+    private async Task ProductAPICall()
     {
         var request = new HttpRequestMessage(
                         HttpMethod.Get,
-                        endpoint
+                        allProductsEndpoint
                     );
 
         var client = ClientFactory.CreateClient();
@@ -97,7 +109,45 @@ else
         if (response.IsSuccessStatusCode)
         {
             var stream = await response.Content.ReadAsStreamAsync();
-            allProducts = await JsonSerializer.DeserializeAsync<List<ProductData>>(stream);
+            allProducts = await JsonSerializer.DeserializeAsync<List<Product>>(stream);
+            if(allProducts != null)
+            {
+                filteredProducts = allProducts;
+                foreach(var eachProduct in filteredProducts)
+                {
+                    if (allLoyaltyGroups != null)
+                    {
+                        eachProduct.productLoyaltyGroup = allLoyaltyGroups.SingleOrDefault(x => x.id == eachProduct.loyaltyGroup_Id);
+                    }
+                }
+            }
+            
+
+        }
+        else
+        {
+            // TODO: Handle error - display message
+            Console.WriteLine("Something went wrong - Please try again later...");
+        }
+        StateHasChanged();
+    }
+
+
+    private async Task LoyaltyAPICall()
+    {
+        var request = new HttpRequestMessage(
+                        HttpMethod.Get,
+                        allLoyaltyGroupsEndpoint
+                    );
+
+        var client = ClientFactory.CreateClient();
+
+        var response = await client.SendAsync(request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var stream = await response.Content.ReadAsStreamAsync();
+            allLoyaltyGroups = await JsonSerializer.DeserializeAsync<List<LoyaltyGroup>>(stream);
         }
         else
         {
@@ -112,13 +162,13 @@ else
     /// </summary>
     /// <param name="productSearch">Product to be checked</param>
     /// <returns></returns>
-    private bool IsVisible(ProductData productSearch)
+    private bool IsVisible(Product productSearch)
     {
         if(string.IsNullOrEmpty(filterProduct))
         {
             return true;
         }
-
+        
         if (productSearch.name.Contains(filterProduct, StringComparison.OrdinalIgnoreCase))
         {
             return true;
@@ -145,17 +195,4 @@ else
         return false;
     }
 
-
-    /// <summary>
-    /// Class for products
-    /// </summary>
-    public class ProductData
-    {
-        public int id { get; set; }
-        public string? barcode { get; set; }
-        public int? sku { get; set; }
-        public string name { get; set; } = string.Empty;
-        public int loyaltyGroup_Id { get; set; }
-    
-    }
 }

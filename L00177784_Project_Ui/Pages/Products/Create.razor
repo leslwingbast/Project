@@ -1,0 +1,20 @@
+﻿@page "/products/create"
+
+@using Data;
+@inject NavigationManager navManager
+@inject IJSRuntime js
+
+<h3>New Product</h3>
+<br/>
+<div class="align-content-center">
+    <ProductForm ButtonText="Create Product" prod="newProduct" OnValidSubmit="@CreateProduct"/>
+</div>
+
+
+@code {
+    private Product newProduct { get; set; } = new Product();
+    private async Task CreateProduct()
+    {
+        await js.InvokeVoidAsync("alert", "Handicap for Male Members must be between 0-26!!");
+    }
+}
