@@ -1,0 +1,70 @@
+﻿@page "/products/create"
+
+@using Data;
+@using System.Text
+@using Newtonsoft.Json
+@inject IHttpClientFactory ClientFactory
+@inject NavigationManager navManager
+@inject IJSRuntime js
+
+
+<h3>New Product</h3>
+<br/>
+<div class="align-content-center">
+    <ProductForm ButtonText="Create Product" prod="newProduct" OnValidSubmit="@CreateProduct"/>
+</div>
+
+
+@code {
+    /// <summary>
+    /// New instance of product populated within form
+    /// </summary>
+    private Product newProduct { get; set; } = new Product();
+
+    /// <summary>
+    /// Create a new product product
+    /// </summary>
+    /// <returns>Adds product to system and returns to product page</returns>
+    private async Task CreateProduct()
+    {
+        // Check if name is populated and show error if not
+        if (newProduct.name == "")
+        {
+            await js.InvokeVoidAsync("alert", "Please enter a product name");
+        }
+        // Check if both barcode and sku are null and show error if so
+        else if (newProduct.barcode == null && newProduct.sku == null)
+        {
+            await js.InvokeVoidAsync("alert", "Either a barcode or sku must be entered for a product");
+        }
+        // Create the product
+        else
+        {
+            var request = new HttpRequestMessage(
+                HttpMethod.Post,
+                "https://localhost:7240/api/Products"
+            );
+
+            var client = ClientFactory.CreateClient();
+
+            // Convert new product to json
+            string stringjson = JsonConvert.SerializeObject(newProduct);
+            // Add content including new product to request
+            request.Content = new StringContent(stringjson, Encoding.UTF8, "application/json");
+            // Try to post the new product
+            try
+            {
+                var response = await client.SendAsync(request);
+                response.EnsureSuccessStatusCode();
+                Console.WriteLine(await response.Content.ReadAsStringAsync());
+            }
+            catch (Exception ex)
+            {
+                await js.InvokeVoidAsync("alert", ex);
+            }
+            // Return to products page
+            navManager.NavigateTo("/products");
+        }
+    }
+
+}

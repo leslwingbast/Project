@@ -1,0 +1,120 @@
+﻿@page "/products/edit/{productId:int}"
+
+@using Data;
+@using System.Text
+@using Newtonsoft.Json
+@using Newtonsoft.Json.Linq
+@inject IHttpClientFactory ClientFactory
+@inject NavigationManager navManager
+@inject IJSRuntime js
+
+
+<h3>New Product</h3>
+<br/>
+<div class="align-content-center">
+    <ProductForm ButtonText="Save" prod="editProduct" OnValidSubmit="@EditProduct"/>
+    <button class="btn btn-danger align-self-center" @onclick="DeleteProduct">Delete Product</button>
+</div>
+
+@code {
+    [Parameter]
+    public int productId { get; set; }
+
+    private Product editProduct = new Product();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetProduct(productId);
+    }
+
+    private async Task GetProduct(int productId)
+    {
+        string endpoint = "https://localhost:7240/api/Products/" + productId;
+
+        var client = ClientFactory.CreateClient();
+
+        var request = new HttpRequestMessage(
+                        HttpMethod.Get,
+                        endpoint
+
+                    );
+        var response = await client.SendAsync(request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var responseData = await response.Content.ReadAsStringAsync();
+
+            editProduct = JsonConvert.DeserializeObject<Product>(responseData);
+        }
+        else
+        {
+            await js.InvokeVoidAsync("alert", "There was a problem retrieving this product");
+        }
+    }
+
+    private async Task EditProduct()
+    {
+        // Check if name is populated and show error if not
+        if (editProduct.name == "")
+        {
+            await js.InvokeVoidAsync("alert", "Please enter a product name");
+        }
+        // Check if both barcode and sku are null and show error if so
+        else if (editProduct.barcode == null && editProduct.sku == null)
+        {
+            await js.InvokeVoidAsync("alert", "Either a barcode or sku must be entered for a product");
+        }
+        // Edit the product
+        else
+        {
+            string endpoint = "https://localhost:7240/api/Products/" + productId;
+            var request = new HttpRequestMessage(
+                HttpMethod.Put,
+                endpoint
+            );
+
+            var client = ClientFactory.CreateClient();
+
+            // Convert new product to json
+            string stringjson = JsonConvert.SerializeObject(editProduct);
+            // Add content including new product to request
+            request.Content = new StringContent(stringjson, Encoding.UTF8, "application/json");
+            // Try to post the new product
+            try
+            {
+                var response = await client.SendAsync(request);
+                response.EnsureSuccessStatusCode();
+                await js.InvokeVoidAsync("alert", "Product has been updated");
+            }
+            catch (Exception ex)
+            {
+                await js.InvokeVoidAsync("alert", ex);
+            }
+            // Return to products page
+            navManager.NavigateTo("/products");
+        }
+    }
+
+    private async Task DeleteProduct()
+    {
+        bool confirmed = await js.InvokeAsync<bool>("confirm", $"Are you sure you want to delete {editProduct.name}?");
+        if (confirmed)
+        {
+            string endpoint = "https://localhost:7240/api/Products/" + productId;
+            var request = new HttpRequestMessage(
+                HttpMethod.Delete,
+                endpoint
+            );
+            var client = ClientFactory.CreateClient();
+
+            var response = await client.SendAsync(request);
+            response.EnsureSuccessStatusCode();
+            await js.InvokeVoidAsync("alert", "Product has been deleted");
+            navManager.NavigateTo("/products");
+        }
+        else
+        {
+            await js.InvokeVoidAsync("alert", "This product can not be deleted");
+        }
+    }
+}

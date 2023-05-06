@@ -1,0 +1,90 @@
+﻿@using Data;
+@using System.Text.Json
+@using System.Text.Json.Serialization
+@inject NavigationManager navManager
+@inject IHttpClientFactory ClientFactory
+
+<EditForm Model="@prod" OnValidSubmit="@OnValidSubmit">
+    <DataAnnotationsValidator />
+    <div class="alert alert-secondary p-4 col-3 mx-auto" style="min-width: 300px;">
+        <form>
+                <div class="row-1 my-1">
+                    <div class="form-group col">
+                        <label for="name">Product Name:</label>
+                        <input type="text" class="form-control" id="inputProductName" @bind="@prod.name" placeholder="Product Name">
+                        <ValidationMessage For="@(()=> prod.name)" />
+                    </div>
+                </div>
+                <div class="row-1 my-1">
+                    <div class="form-group col">
+                        <label for="name">Sku:</label>
+                        <input type="text" class="form-control" id="inputSku" @bind="@prod.sku" placeholder="123456">
+                        <ValidationMessage For="@(()=> prod.sku)" />
+                    </div>
+                </div>
+                <div class="row-1 my-1">
+                    <div class="form-group col">
+                        <label for="name">Barcode:</label>
+                        <input type="text" class="form-control" id="inputBarcode" @bind="@prod.barcode" placeholder="5011059000159">
+                        <ValidationMessage For="@(()=> prod.barcode)" />
+                    </div>
+                </div>
+                <div class="row-1 my-1">
+                    <div class="form-group col">
+                        <label>Loyalty Group:</label>
+                        <InputSelect id="loyaltyGroup" class="form-control" @bind-Value="@prod.loyaltyGroup_Id">
+                            <option selected>Please select</option>
+                            @foreach (var group in loyaltyGroups)
+                            {
+                                <option value="@group.id">@group.name</option>
+                            }
+                        </InputSelect>
+                    </div>
+                </div>
+        </form>
+        <div class="row my-1">
+            <button type="submit" class="btn col-sm mt-4 mx-1 btn-success">
+                @ButtonText
+            </button>
+            <div type="submit" class="btn btn-warning col-sm mt-4 mx-1" @onclick="Cancel">Cancel</div>
+        </div>
+    </div>
+</EditForm>
+@code {
+    [Parameter] public Product? prod { get; set; }
+    [Parameter] public string ButtonText { get; set; } = "Save";
+    [Parameter] public EventCallback OnValidSubmit { get; set; }
+
+
+    private List<LoyaltyGroup> loyaltyGroups = new List<LoyaltyGroup>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                "https://localhost:7240/api/LoyaltyGroups"
+            );
+
+        var client = ClientFactory.CreateClient();
+
+        var response = await client.SendAsync(request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var stream = await response.Content.ReadAsStreamAsync();
+            loyaltyGroups = await JsonSerializer.DeserializeAsync<List<LoyaltyGroup>>(stream);
+        }
+        else
+        {
+            // TODO: Handle error - display message
+            Console.WriteLine("Something went wrong - Please try again later...");
+        }
+        StateHasChanged();
+    }
+
+
+    private void Cancel()
+    {
+        navManager.NavigateTo("/products");
+    }
+}
