@@ -1,6 +1,7 @@
 ﻿@using Data;
 @using System.Text.Json
 @using System.Text.Json.Serialization
+@inject NavigationManager navManager
 @inject IHttpClientFactory ClientFactory
 
 <EditForm Model="@prod" OnValidSubmit="@OnValidSubmit">
@@ -45,14 +46,15 @@
             <button type="submit" class="btn col-sm mt-4 mx-1 btn-success">
                 @ButtonText
             </button>
-            <button class="btn btn-danger col-sm mt-4 mx-1">Cancel</button>
+            <div type="submit" class="btn btn-warning col-sm mt-4 mx-1" @onclick="Cancel">Cancel</div>
         </div>
     </div>
 </EditForm>
 @code {
-        [Parameter] public Product? prod { get; set; }
-        [Parameter] public string ButtonText { get; set; } = "Save";
-        [Parameter] public EventCallback OnValidSubmit { get; set; }
+    [Parameter] public Product? prod { get; set; }
+    [Parameter] public string ButtonText { get; set; } = "Save";
+    [Parameter] public EventCallback OnValidSubmit { get; set; }
+
 
     private List<LoyaltyGroup> loyaltyGroups = new List<LoyaltyGroup>();
 
@@ -78,5 +80,11 @@
             Console.WriteLine("Something went wrong - Please try again later...");
         }
         StateHasChanged();
+    }
+
+
+    private void Cancel()
+    {
+        navManager.NavigateTo("/products");
     }
 }

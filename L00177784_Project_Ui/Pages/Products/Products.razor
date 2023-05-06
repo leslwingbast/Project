@@ -4,6 +4,7 @@
 @using System.Text.Json
 @using System.Text.Json.Serialization
 @inject IHttpClientFactory ClientFactory
+@inject NavigationManager navManager
 
 
 <PageTitle>Products</PageTitle>
@@ -38,7 +39,7 @@ else
             {
                 if (!IsVisible(currentProduct))
                     continue;
-            <tr>
+                <tr @onclick="() => Select(currentProduct)">
                     <td>@currentProduct.id</td>
                     <td>@currentProduct.sku</td>
                     <td>@currentProduct.name</td>
@@ -121,7 +122,7 @@ else
                     }
                 }
             }
-            
+
 
         }
         else
@@ -168,7 +169,7 @@ else
         {
             return true;
         }
-        
+
         if (productSearch.name.Contains(filterProduct, StringComparison.OrdinalIgnoreCase))
         {
             return true;
@@ -193,6 +194,11 @@ else
         }
 
         return false;
+    }
+
+    private void Select(Product selectedProduct)
+    {
+        navManager.NavigateTo("/products/edit/" + selectedProduct.id);
     }
 
 }
