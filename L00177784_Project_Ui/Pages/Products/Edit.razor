@@ -13,7 +13,11 @@
 <br/>
 <div class="align-content-center">
     <ProductForm ButtonText="Save" prod="editProduct" OnValidSubmit="@EditProduct"/>
-    <button class="btn btn-danger align-self-center" @onclick="DeleteProduct">Delete Product</button>
+    <div class="container alert-secondary p-4 pt-0 col-3 mx-auto" style="min-width: 300px;">
+        <div class="row">
+            <div class="btn btn-danger col text-center" @onclick="DeleteProduct">Delete Product</div>
+        </div>
+    </div>
 </div>
 
 @code {
@@ -44,7 +48,7 @@
         {
             var responseData = await response.Content.ReadAsStringAsync();
 
-            editProduct = JsonConvert.DeserializeObject<Product>(responseData);
+            editProduct = JsonConvert.DeserializeObject<Product>(responseData)!;
         }
         else
         {

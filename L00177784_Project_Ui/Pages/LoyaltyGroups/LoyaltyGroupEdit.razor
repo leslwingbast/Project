@@ -1,0 +1,190 @@
+﻿@page "/loyaltygroups/edit/{loyaltyId:int}"
+
+@using Data;
+@using System.Text
+@using Newtonsoft.Json
+@using Newtonsoft.Json.Linq
+@using BootstrapBlazor.Components
+@inject IHttpClientFactory ClientFactory
+@inject NavigationManager navManager
+@inject IJSRuntime js
+
+<h3>LoyaltyGroupEdit</h3>
+<div class="align-content-center">   
+    <EditForm Model="@editLoyaltyGroup" OnValidSubmit="@EditLoyaltyGroup">
+    <DataAnnotationsValidator />
+    <div class="container alert-secondary p-4 col-3 mx-auto" style="min-width: 300px;">
+        <form>
+            <div class="row-1 my-1">
+                <div class="form-group col">
+                    <label for="name">Loyalty Group Name:</label>
+                    <input type="text" class="form-control" id="inputProductName" @bind="@editLoyaltyGroup!.name" placeholder="Loyalty Group Name">
+                    <ValidationMessage For="@(()=> editLoyaltyGroup.name)" />
+                </div>
+            </div>
+            <div class="row-1 my-1">
+                <div class="form-group col">
+                    <label for="products">Products:</label>
+                    <MultiSelect Items="@items" @bind-Value="@SelectedValues" style="font-size:small;" />
+                </div>
+            </div>
+        </form>
+        <div class="row my-1">
+            <button type="submit" class="btn col-sm mt-4 mx-1 btn-success">
+                Submit
+            </button>
+            <div type="submit" class="btn btn-warning col-sm mt-4 mx-1" @onclick="Cancel">Cancel</div>
+        </div>
+    </div>
+</EditForm>
+
+</div>
+
+@code {
+    [Parameter]
+    public int loyaltyId { get; set; }
+
+    private LoyaltyGroup editLoyaltyGroup = new LoyaltyGroup();
+
+    public List<SelectedItem> items { get; set; } = new List<SelectedItem>();
+    public List<SelectedItem> dataSource { get; set; } = new List<SelectedItem>();
+    public List<String> currentProducts { get; set; } = new List<string>();
+    private List<Product> products = new List<Product>();
+
+    private IEnumerable<string> SelectedValues { get; set; } = Enumerable.Empty<string>();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetLoyaltyGroup(loyaltyId);
+        await ProductAPICall();
+        SelectedValues = currentProducts.ToList();
+    }
+
+    private async Task GetLoyaltyGroup(int loyaltyId)
+    {
+        string endpoint = "https://localhost:7240/api/LoyaltyGroups/" + loyaltyId;
+
+        var client = ClientFactory.CreateClient();
+
+        var request = new HttpRequestMessage(
+                        HttpMethod.Get,
+                        endpoint
+
+                    );
+        var response = await client.SendAsync(request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var responseData = await response.Content.ReadAsStringAsync();
+
+            editLoyaltyGroup = JsonConvert.DeserializeObject<LoyaltyGroup>(responseData)!;
+        }
+        else
+        {
+            await js.InvokeVoidAsync("alert", "There was a problem retrieving this loyalty scheme");
+        }
+
+    }
+
+
+
+    private readonly string allProductsEndpoint = "https://localhost:7240/api/Products";
+
+    /// <summary>
+    /// Initial API call to load all products
+    /// </summary>
+    /// <param name="endpoint">Endpoint to be called by the API</param>
+    /// <returns></returns>
+    private async Task ProductAPICall()
+    {
+        var request = new HttpRequestMessage(
+                        HttpMethod.Get,
+                        allProductsEndpoint
+                    );
+
+        var client = ClientFactory.CreateClient();
+
+        var response = await client.SendAsync(request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var responseData = await response.Content.ReadAsStringAsync();
+            products = JsonConvert.DeserializeObject<List<Product>>(responseData);
+            foreach (var product in products!)
+            {
+                dataSource.Add(new SelectedItem
+                    {
+                        Value = product.id.ToString(),
+                        Text = product.name
+                    });
+
+                if (product.loyaltyGroup_Id == editLoyaltyGroup.id)
+                {
+                    currentProducts.Add(product.id.ToString());
+                }
+            }
+            items = GenerateDataSource(dataSource);
+
+        }
+        else
+        {
+            // TODO: Handle error - display message
+            await js.InvokeVoidAsync("alert", "There was a prolem retrieving the products");
+        }
+        StateHasChanged();
+    }
+
+    private static List<SelectedItem> GenerateDataSource(List<SelectedItem> source) => source.Select(i => new SelectedItem(i.Value, i.Text)).ToList();
+
+
+
+    private async Task EditLoyaltyGroup()
+    {
+
+        foreach(Product updateProduct in products)
+        {
+            if(SelectedValues.Contains(updateProduct.id.ToString()))
+            {
+                if(updateProduct.loyaltyGroup_Id != editLoyaltyGroup.id)
+                {
+                    updateProduct.loyaltyGroup_Id = (int)editLoyaltyGroup.id!;
+                    await UpdateProduct(updateProduct);
+                }
+
+            }
+            else if(updateProduct.loyaltyGroup_Id == editLoyaltyGroup.id)
+            {
+                updateProduct.loyaltyGroup_Id = null;
+                await UpdateProduct(updateProduct);
+            }
+        }
+
+    }
+
+    private async Task UpdateProduct(Product productToUpdate)
+    {
+        
+        string endpoint = "https://localhost:7240/api/Products/" + productToUpdate.id;
+        var request = new HttpRequestMessage(
+            HttpMethod.Put,
+            endpoint
+        );
+
+        var client = ClientFactory.CreateClient();
+
+        // Convert new product to json
+        string stringjson = JsonConvert.SerializeObject(productToUpdate);
+        // Add content including new product to request
+        request.Content = new StringContent(stringjson, Encoding.UTF8, "application/json");
+
+        var response = await client.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+        await js.InvokeVoidAsync("alert", "Updated Product");
+    }
+
+    private void Cancel()
+    {
+        navManager.NavigateTo("/loyaltygroups");
+    }
+}

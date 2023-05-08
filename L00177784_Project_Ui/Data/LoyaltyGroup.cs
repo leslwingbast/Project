@@ -7,7 +7,7 @@ namespace L00177784_Project_Ui.Data
         public string? name { get; set; }
         public int? threshold { get; set; }
         public string? image { get; set; }
-
+        public List<int>? productIds {get; set;}
 
     }
 }

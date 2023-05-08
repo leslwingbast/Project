@@ -1,0 +1,111 @@
+﻿@page "/loyaltygroups"
+
+@using Data
+@using System.Text.Json
+@using System.Text.Json.Serialization
+@inject IHttpClientFactory ClientFactory
+@inject NavigationManager navManager
+
+<h3>ProductGroups</h3>
+
+
+<div class="row">
+    <input type="text" placeholder="Search by Loyalty Group ID or Name"
+           @bind="filterLoyaltyGroup"
+           @bind:event="oninput" />
+</div>
+<br/>
+@if (allLoyaltyGroups == null || filteredLoyaltyGroups == null)
+{
+    <p>Loading ....</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <td>Image</td>
+                <td>Id</td>
+                <td>Name</td>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach(var loyaltyGroup in filteredLoyaltyGroups)
+            {
+                if (!IsVisible(loyaltyGroup))
+                    continue;
+                <tr @onclick="() => Select(loyaltyGroup)">
+                    <td><img src="images/ + @loyaltyGroup.image" alt="" style="max-height:30px; max-width:50px; margin-right:10px;margin-left:10px;"/></td>
+                    <td>@loyaltyGroup.id</td>
+                    <td>@loyaltyGroup.name</td>
+                </tr>
+
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<LoyaltyGroup>? allLoyaltyGroups, filteredLoyaltyGroups = new List<LoyaltyGroup>();
+
+    private string allLoyaltyGroupsEndpoint = "https://localhost:7240/api/LoyaltyGroups";
+
+    string filterLoyaltyGroup = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoyaltyAPICall();
+        filteredLoyaltyGroups = allLoyaltyGroups;
+    }
+
+
+
+    private async Task LoyaltyAPICall()
+    {
+        var request = new HttpRequestMessage(
+                        HttpMethod.Get,
+                        allLoyaltyGroupsEndpoint
+                    );
+
+        var client = ClientFactory.CreateClient();
+
+        var response = await client.SendAsync(request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var stream = await response.Content.ReadAsStreamAsync();
+            allLoyaltyGroups = await JsonSerializer.DeserializeAsync<List<LoyaltyGroup>>(stream);
+        }
+        else
+        {
+            // TODO: Handle error - display message
+            System.Console.WriteLine("Something went wrong - Please try again later...");
+        }
+        StateHasChanged();
+    }
+
+    private bool IsVisible(LoyaltyGroup loyaltyGroupSearch)
+    {
+        if (string.IsNullOrEmpty(filterLoyaltyGroup))
+        {
+            return true;
+        }
+
+        if (loyaltyGroupSearch.name.Contains(filterLoyaltyGroup, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+       
+        if (loyaltyGroupSearch.id.ToString().Contains(filterLoyaltyGroup, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private void Select(LoyaltyGroup selectedGroup)
+    {
+        navManager.NavigateTo("/loyaltygroups/edit/" + selectedGroup.id);
+    }
+}
