@@ -1,0 +1,109 @@
+﻿@page "/loyaltyscheme/edit/{schemeId:int}"
+
+@using Data
+@using System.Text
+@using Newtonsoft.Json
+@using Newtonsoft.Json.Linq
+@inject IHttpClientFactory ClientFactory
+@inject NavigationManager navManager
+@inject IJSRuntime js
+@inject IConfiguration config
+
+<h3>Edit</h3>
+
+<div class="align-content-center"> 
+    <EditForm Model="@editLoyaltyScheme" OnValidSubmit="@EditLoyaltyScheme">
+        <div class="container alert-secondary p-4 col-6 mx-auto" style="min-width: 300px;">
+            <div class="row-1 my-1">
+                <div class="form-group col">
+                    <label for="name">Customer Number:</label>
+                    <input type="text" class="form-control" @bind="@editLoyaltyScheme!.customerId" disabled>                    
+                </div>
+            </div>
+            <div class="row-1 my-1">
+                <div class="form-group col">
+                    <label for="name">Loyalty Scheme:</label>
+                    <input type="text" class="form-control" @bind="@editLoyaltyScheme!.loyaltyGroup!.name" disabled>
+                </div>
+            </div>
+            <div class="row-1 my-1">
+                <div class="form-group col">
+                    <label for="name">Remaining Items:</label>
+                    <input type="number" class="form-control" @bind-value="@editLoyaltyScheme!.remainingItems" disabled>
+                </div>
+            </div>
+        </div>
+    </EditForm>
+
+</div>
+
+@code {
+    [Parameter]
+    public int schemeId { get; set; }
+    private LoyaltyScheme editLoyaltyScheme = new LoyaltyScheme();
+    private LoyaltyGroup connectedLoytaltyGroup = new LoyaltyGroup();
+    private string schemeEndpoint { get; set; } = string.Empty;
+    private string groupEndpoint { get; set; } = string.Empty;
+    
+
+    protected override async Task OnInitializedAsync()
+    {
+        schemeEndpoint = string.Concat(config.GetValue<string>("BaseApiUrl")!, "/loyaltyschemes/", schemeId.ToString());
+        await GetScheme(schemeId);
+
+    }
+
+    private async Task GetScheme(int schemeId)
+    {
+        var client = ClientFactory.CreateClient();
+
+        var request = new HttpRequestMessage(
+                        HttpMethod.Get,
+                        schemeEndpoint
+
+                    );
+        var response = await client.SendAsync(request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var responseData = await response.Content.ReadAsStringAsync();
+
+            editLoyaltyScheme = JsonConvert.DeserializeObject<LoyaltyScheme>(responseData)!;
+            groupEndpoint = string.Concat(config.GetValue<string>("BaseApiUrl")!, "/loyaltyschemes/", editLoyaltyScheme.loyaltyGroup_Id.ToString());
+            await UpdateConnectedLoyaltyGroup(groupEndpoint);
+
+        }
+        else
+        {
+            await js.InvokeVoidAsync("alert", "There was a problem retrieving this product");
+        }
+    }
+
+    private async Task UpdateConnectedLoyaltyGroup(string endpoint)
+    {
+        var client = ClientFactory.CreateClient();
+        var request = new HttpRequestMessage(
+                        HttpMethod.Get,
+                        endpoint
+
+                    );
+        var response = await client.SendAsync(request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var responseData = await response.Content.ReadAsStringAsync();
+
+            connectedLoytaltyGroup = JsonConvert.DeserializeObject<LoyaltyGroup>(responseData)!;
+            editLoyaltyScheme.loyaltyGroup = connectedLoytaltyGroup;
+        }
+        else
+        {
+            await js.InvokeVoidAsync("alert", "There was a problem retrieving this product");
+        }
+    }
+
+    private async Task EditLoyaltyScheme()
+    {
+        await js.InvokeVoidAsync("alert", "Loyalty Scheme updated");
+    }
+}
