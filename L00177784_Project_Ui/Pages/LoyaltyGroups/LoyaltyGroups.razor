@@ -6,8 +6,8 @@
 @inject IHttpClientFactory ClientFactory
 @inject NavigationManager navManager
 
-<h3>ProductGroups</h3>
-
+<h3>Loyalty Groups</h3>
+<a class="btn btn-success mb-4" href="/loyaltygroups/create"><i class="oi oi-plus"></i> Create New Loyalty Group</a>
 
 <div class="row">
     <input type="text" placeholder="Search by Loyalty Group ID or Name"
@@ -15,28 +15,43 @@
            @bind:event="oninput" />
 </div>
 <br/>
+<p>Select a loyalty group below to edit</p>
 @if (allLoyaltyGroups == null || filteredLoyaltyGroups == null)
 {
     <p>Loading ....</p>
 }
 else
 {
-    <table class="table">
+    <table class="table table-hover align-content-start">
         <thead>
             <tr>
-                <td>Image</td>
                 <td>Id</td>
+                <td class="px-4">Image</td>
                 <td>Name</td>
             </tr>
         </thead>
-        <tbody>
+        <tbody class="align-middle">
             @foreach(var loyaltyGroup in filteredLoyaltyGroups)
             {
                 if (!IsVisible(loyaltyGroup))
                     continue;
                 <tr @onclick="() => Select(loyaltyGroup)">
-                    <td><img src="images/ + @loyaltyGroup.image" alt="" style="max-height:30px; max-width:50px; margin-right:10px;margin-left:10px;"/></td>
                     <td>@loyaltyGroup.id</td>
+                    <td class="px-4">
+                        @if (string.IsNullOrEmpty(loyaltyGroup.image))
+                        {
+                            <img
+                        src=@string.Concat("/images/",placholderImage)
+                        alt="@loyaltyGroup.name" 
+                        style="max-height:50px;"/>
+                        }else
+                        {
+                            <img
+                        src=@string.Concat("/images/",loyaltyGroup.image)
+                        alt="@loyaltyGroup.name" 
+                        style="max-height:50px;"/>
+                        }
+                    </td>
                     <td>@loyaltyGroup.name</td>
                 </tr>
 
@@ -51,6 +66,8 @@ else
     private string allLoyaltyGroupsEndpoint = "https://localhost:7240/api/LoyaltyGroups";
 
     string filterLoyaltyGroup = string.Empty;
+
+    string placholderImage = "placeholder.png";
 
     protected override async Task OnInitializedAsync()
     {
@@ -91,12 +108,12 @@ else
             return true;
         }
 
-        if (loyaltyGroupSearch.name.Contains(filterLoyaltyGroup, StringComparison.OrdinalIgnoreCase))
+        if (loyaltyGroupSearch.name!.Contains(filterLoyaltyGroup, StringComparison.OrdinalIgnoreCase))
         {
             return true;
         }
        
-        if (loyaltyGroupSearch.id.ToString().Contains(filterLoyaltyGroup, StringComparison.OrdinalIgnoreCase))
+        if (loyaltyGroupSearch.id.ToString()!.Contains(filterLoyaltyGroup, StringComparison.OrdinalIgnoreCase))
         {
             return true;
         }

@@ -256,7 +256,7 @@ namespace L00177784_Project.Controllers
                         LoyaltyGroup = selectedLoyaltyGroup,
                         CustomerId = saleToProcess.CustomerId,
                         LastFreeBag = null,
-                        RemainingItems = selectedLoyaltyGroup.Threshold! - saleToProcess.Qty,
+                        RemainingItems = selectedLoyaltyGroup!.Threshold! - saleToProcess.Qty,
                         LoyaltyGroup_Id = selectedLoyaltyGroup.Id,
                         GroupName = selectedLoyaltyGroup.Name,
                     };

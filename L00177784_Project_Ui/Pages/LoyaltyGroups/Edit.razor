@@ -7,6 +7,7 @@
 @using BootstrapBlazor.Components
 @inject IHttpClientFactory ClientFactory
 @inject NavigationManager navManager
+@inject IConfiguration config
 @inject IJSRuntime js
 
 <h3>LoyaltyGroupEdit</h3>
@@ -25,33 +26,38 @@
             <div class="row-1 my-2">
                 <div class="form-group col">
                     <label for="threshold">Number of items to be purchased to receive free item</label>
-                    <div class="col-4" style="width: 150px;">
-                        <BootstrapInputNumber ShowButton="true" Value="@editLoyaltyGroup.threshold" Min="0"/>
+                    <div class="col-4" style="width: 150px;">                  
+                         <input type="number" class="form-control" @bind-value="@editLoyaltyGroup.threshold"/>
                     </div>
                 </div>
             </div>
-                <div class="row my-2">
+            <div class="form-group col">
+                <div class="row-1 my-1">
                     <label for="image">Image:</label>
-                    <div class="col-sm-7">
-                        <div class="images-item">
-                            <ImageViewer Url="@image"
-                                         FitMode="ObjectFitMode.Contain" style="max-width: 200px;" />
+                    <div class="row-1 ">
+                        <div class="form-group">
+                            <InputFile OnChange="ReplaceImage" class="btn btn-light col-12" accept="image/png, image/jpeg, image/gif" id="inputFile">
+                                <label for="inputFile">Replace Image</label>
+                            </InputFile>
                         </div>
                     </div>
-                    <div class="col" style="min-width:40%">
-                        <div class="row">
-                            <label style="font-size:smaller">Suggested Image Dimensions:</label>
-                            <label style="font-size:smaller">200px x 100px</label>
+                    <div class="row my-1">
+                        <div class="col" style="min-width:30%">
+                            <div class="row" style="font-size:smaller">
+                                <label style="font-size:smaller">Suggested Image Dimensions:</label>
+                                <label style="font-size:smaller">200px x 100px</label>
+                                <label style="font-size:smaller">Max file size: 500kb</label>
+                            </div>
                         </div>
-                        <br/>
-                        <div class="row">
-                            
-                            <div class="btn btn-light" style="max-width:150px" @onclick="ReplaceImage">Replace Image</div>
-                            
+                            <div class="col">                       
+                                <ImageViewer Url=@string.Concat("/images/",image)
+                                             FitMode="ObjectFitMode.Fill" style="max-width: 200px;" />                       
                         </div>
                     </div>
 
                 </div>
+
+            </div>
             <div class="row-1 my-1">
                 <div class="form-group col">
                     <label for="products">Products:</label>
@@ -61,10 +67,9 @@
             
         </form>
         <div class="row my-1">
-            <button type="submit" class="btn col-sm mt-4 mx-1 btn-success">
-                Submit
-            </button>
+            <button type="submit" class="btn col-sm mt-4 mx-1 btn-success">Submit</button>
             <div type="submit" class="btn btn-warning col-sm mt-4 mx-1" @onclick="Cancel">Cancel</div>
+            <div type="submit" class="btn btn-danger col-sm mt-4 mx-1" @onclick="DeleteLoyaltyGroup">Delete</div>
         </div>
     </div>
 </EditForm>
@@ -81,7 +86,9 @@
     [Parameter]
     public int loyaltyId { get; set; }
 
-    private string image = "/images/placeholder.png";
+    private string image = "placeholder.png";
+
+    private long maxImageSize = 1024 * 512;
 
     /// <summary>
     /// Loyalty group to be edited
@@ -149,7 +156,7 @@
             editLoyaltyGroup = JsonConvert.DeserializeObject<LoyaltyGroup>(responseData)!;
             @if(!string.IsNullOrEmpty(editLoyaltyGroup.image))
             {
-                image = string.Concat("/images/",editLoyaltyGroup.image);
+                image = editLoyaltyGroup.image;
             }
         }
         else
@@ -184,7 +191,7 @@
         if (response.IsSuccessStatusCode)
         {
             var responseData = await response.Content.ReadAsStringAsync();
-            products = JsonConvert.DeserializeObject<List<Product>>(responseData);
+            products = JsonConvert.DeserializeObject<List<Product>>(responseData)!;
             foreach (var product in products!)
             {
                 dataSource.Add(new SelectedItem
@@ -239,7 +246,45 @@
             {
                 updateProduct.loyaltyGroup_Id = null;
                 await UpdateProduct(updateProduct);
+            }     
+        }
+        if (string.IsNullOrEmpty(editLoyaltyGroup.name))
+        {
+            await js.InvokeVoidAsync("alert", "Group name required");
+        }
+        else if (editLoyaltyGroup.threshold == 0)
+        {
+            await js.InvokeVoidAsync("alert", "Thresold for free product cannot be 0");
+        }
+        else
+        {
+            editLoyaltyGroup.image = image;
+
+            string endpoint = "https://localhost:7240/api/LoyaltyGroups/" + loyaltyId;
+            var request = new HttpRequestMessage(
+                HttpMethod.Put,
+                endpoint
+            );
+
+            var client = ClientFactory.CreateClient();
+
+            // Convert new product to json
+            string stringjson = JsonConvert.SerializeObject(editLoyaltyGroup);
+            // Add content including new product to request
+            request.Content = new StringContent(stringjson, Encoding.UTF8, "application/json");
+            // Try to post the new product
+            try
+            {
+                var response = await client.SendAsync(request);
+                response.EnsureSuccessStatusCode();
+                await js.InvokeVoidAsync("alert", "Loyalty Group has been updated");
             }
+            catch (Exception ex)
+            {
+                await js.InvokeVoidAsync("alert", ex);
+            }
+            // Return to products page
+            navManager.NavigateTo("/loyaltygroups");
         }
 
     }
@@ -251,7 +296,6 @@
     /// <returns>Done</returns>
     private async Task UpdateProduct(Product productToUpdate)
     {
-
         string endpoint = "https://localhost:7240/api/Products/" + productToUpdate.id;
         var request = new HttpRequestMessage(
             HttpMethod.Put,
@@ -267,19 +311,52 @@
 
         var response = await client.SendAsync(request);
         response.EnsureSuccessStatusCode();
-        await js.InvokeVoidAsync("alert", "Updated Product");
+
     }
 
-    private void ReplaceImage()
+    private async Task ReplaceImage(InputFileChangeEventArgs e)
     {
-        js.InvokeVoidAsync("alert", "REplace Image");
+        string fileNewName = Path.ChangeExtension(Path.GetRandomFileName(), Path.GetExtension(e.File.Name));
+
+        string path = Path.Combine(config.GetValue<string>("FileStore")!, fileNewName);
+        await using FileStream fs = new(path, FileMode.Create);
+        await e.File.OpenReadStream(maxImageSize).CopyToAsync(fs);
+        image = fileNewName;
     }
+
+    private async Task DeleteLoyaltyGroup()
+    {
+        bool confirmed = await js.InvokeAsync<bool>("confirm", $"Are you sure you want to delete {editLoyaltyGroup.name}?");
+        if (confirmed)
+        {
+            string endpoint = "https://localhost:7240/api/LoyaltyGroups/" + loyaltyId;
+            var request = new HttpRequestMessage(
+                HttpMethod.Delete,
+                endpoint
+            );
+            var client = ClientFactory.CreateClient();
+
+            var response = await client.SendAsync(request);
+            response.EnsureSuccessStatusCode();
+            await js.InvokeVoidAsync("alert", "Loyalty Group has been deleted");
+            navManager.NavigateTo("/loyaltyGroups");
+        }
+    }
+
 
     /// <summary>
     /// Returns user to loyalty groups page
     /// </summary>
     private void Cancel()
     {
+        if (string.IsNullOrEmpty(editLoyaltyGroup.image))
+        {
+            if (image != "placeholder.png")
+            {
+                string path = Path.Combine(config.GetValue<string>("FileStore")!, image);
+                File.Delete(path);
+            }
+        }
         navManager.NavigateTo("/loyaltygroups");
     }
 }

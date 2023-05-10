@@ -1,0 +1,300 @@
+﻿@page "/loyaltygroups/create"
+
+@using Data
+@using System.Text
+@using Newtonsoft.Json
+@using Newtonsoft.Json.Linq
+@using System.Text.Json.Serialization
+@using BootstrapBlazor.Components
+@inject IHttpClientFactory ClientFactory
+@inject NavigationManager navManager
+@inject IConfiguration config
+@inject IJSRuntime js
+
+<h3>New Loyalty Group</h3>
+<br/>
+<div class="align-content-center">   
+    <EditForm Model="@newLoyaltyGroup" OnValidSubmit="@CreateLoyaltyGroup">
+    <DataAnnotationsValidator />
+    <div class="container alert-secondary p-4 col-6 mx-auto" style="min-width: 300px;">
+        <form>
+            <div class="row-1 my-1">
+                <div class="form-group col">
+                    <label for="name">Loyalty Group Name:</label>
+                    <input type="text" class="form-control" id="inputProductName" @bind="@newLoyaltyGroup!.name" placeholder="Loyalty Group Name">
+                    <ValidationMessage For="@(()=> newLoyaltyGroup.name)" />
+                </div>
+            </div>
+            <div class="row-1 my-2">
+                <div class="form-group col">
+                    <label for="threshold">Number of items to be purchased to receive free item</label>
+                    <div class="col-4" style="width: 150px;">                  
+                         <input type="number" class="form-control" @bind-value="@newLoyaltyGroup.threshold"/>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group col">
+                <div class="row-1 my-1">
+                    <label for="image">Image:</label>
+                    <div class="row-1 ">
+                        <div class="form-group">
+                            <InputFile OnChange="ReplaceImage" class="btn btn-light col-12" accept="image/png, image/jpeg, image/gif" id="inputFile">
+                                <label for="inputFile">Replace Image</label>
+                            </InputFile>
+                        </div>
+                    </div>
+                    <div class="row my-1">
+                        <div class="col" style="min-width:30%">
+                            <div class="row" style="font-size:smaller">
+                                <label style="font-size:smaller">Suggested Image Dimensions:</label>
+                                <label style="font-size:smaller">200px x 100px</label>
+                                <label style="font-size:smaller">Max file size: 500kb</label>
+                            </div>
+                        </div>
+                            <div class="col">                       
+                                <ImageViewer Url=@string.Concat("/images/",image)
+                                             FitMode="ObjectFitMode.Fill" style="max-width: 200px;" />                       
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+            <div class="row-1 my-1">
+                <div class="form-group col">
+                    <label for="products">Products:</label>
+                    <MultiSelect Items="@items" Color="Color.Dark" @bind-Value="@SelectedValues" style="font-size:small;" />
+                </div>
+            </div>
+            
+        </form>
+        <div class="row my-1">
+            <button type="submit" class="btn col-sm mt-4 mx-1 btn-success">Create</button>
+            <div type="submit" class="btn btn-warning col-sm mt-4 mx-1" @onclick="Cancel">Cancel</div>
+        </div>
+    </div>
+    </EditForm>
+</div>
+
+
+
+@code {
+        private string image = "placeholder.png";
+
+        private long maxImageSize = 1024 * 512;
+
+        /// <summary>
+        /// Loyalty group to be edited
+        /// </summary>
+        private LoyaltyGroup newLoyaltyGroup = new LoyaltyGroup();
+
+        /// <summary>
+        /// List of SelectedItem type to populate options in multiselect
+        /// </summary>
+        public List<SelectedItem> items { get; set; } = new List<SelectedItem>();
+
+        /// <summary>
+        /// List of SelectedItem type to work with BlazorBootstrap multiselect
+        /// </summary>
+        public List<SelectedItem> dataSource { get; set; } = new List<SelectedItem>();
+
+        /// <summary>
+        /// Lost of current products that are connected to the current loyalty scheme
+        /// </summary>
+        public List<String> currentProducts { get; set; } = new List<string>();
+
+        /// <summary>
+        /// List of products used to populate options
+        /// </summary>
+        private List<Product> products = new List<Product>();
+
+        /// <summary>
+        /// Selected values in the multiselect
+        /// </summary>
+        private IEnumerable<string> SelectedValues { get; set; } = Enumerable.Empty<string>();
+
+        /// <summary>
+        /// Initialisation of page which will call methods to update loyalty group and products
+        /// </summary>
+        /// <returns>Done</returns>
+        protected override async Task OnInitializedAsync()
+        {
+            await ProductAPICall();
+            SelectedValues = currentProducts.ToList();
+        }
+
+
+        /// <summary>
+        /// Endpoint to get products
+        /// </summary>
+        private readonly string allProductsEndpoint = "https://localhost:7240/api/Products";
+
+        /// <summary>
+        /// Initial API call to load all products for multiselect
+        /// Populates a list of products that are currently matching the loyalty shceme
+        /// </summary>
+        /// <param name="endpoint">Endpoint to be called by the API</param>
+        /// <returns></returns>
+        private async Task ProductAPICall()
+        {
+            var request = new HttpRequestMessage(
+            HttpMethod.Get,
+            allProductsEndpoint
+            );
+
+            var client = ClientFactory.CreateClient();
+
+            var response = await client.SendAsync(request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var responseData = await response.Content.ReadAsStringAsync();
+                products = JsonConvert.DeserializeObject<List<Product>>(responseData)!;
+                foreach (var product in products!)
+                {
+                    dataSource.Add(new SelectedItem
+                    {
+                        Value = product.id.ToString(),
+                        Text = product.name
+                    });
+                }
+                items = GenerateDataSource(dataSource);
+
+            }
+            else
+            {
+                // TODO: Handle error - display message
+                await js.InvokeVoidAsync("alert", "There was a prolem retrieving the products");
+            }
+            StateHasChanged();
+        }
+
+        /// <summary>
+        /// Populates the list of products in the multiselect
+        /// </summary>
+        /// <param name="source">List of products id and name</param>
+        /// <returns>List of selecteditem type</returns>
+        private static List<SelectedItem> GenerateDataSource(List<SelectedItem> source) => source.Select(i => new SelectedItem(i.Value, i.Text)).ToList();
+
+        /// <summary>
+        /// Updates loyalty group with form details
+        /// </summary>
+        /// <returns>Done</returns>
+        private async Task CreateLoyaltyGroup()
+        {
+            if (string.IsNullOrEmpty(newLoyaltyGroup.name))
+            {
+                await js.InvokeVoidAsync("alert", "Group name required");
+            }
+            else if (newLoyaltyGroup.threshold == 0)
+            {
+                await js.InvokeVoidAsync("alert", "Thresold for free product cannot be 0");
+            }
+            else
+            {
+                newLoyaltyGroup.image = image;
+                newLoyaltyGroup.id = 0;
+                string endpoint = "https://localhost:7240/api/LoyaltyGroups";
+                var request = new HttpRequestMessage(
+                HttpMethod.Post,
+                endpoint
+                );
+
+                var client = ClientFactory.CreateClient();
+
+                // Convert new product to json
+                string stringjson = JsonConvert.SerializeObject(newLoyaltyGroup);
+                // Add content including new product to request
+                request.Content = new StringContent(stringjson, Encoding.UTF8, "application/json");
+                // Try to post the new product
+                try
+                {
+                    var response = await client.SendAsync(request);
+                var responseData = await response.Content.ReadAsStringAsync();
+                var createdLoyaltyGroup = JsonConvert.DeserializeObject<LoyaltyGroup>(responseData)!;
+                    newLoyaltyGroup.id = createdLoyaltyGroup.id;
+                    
+                }
+                catch (Exception ex)
+                {
+                    await js.InvokeVoidAsync("alert", ex);
+                }
+
+            }
+
+            foreach (Product updateProduct in products)
+            {
+                if (SelectedValues.Contains(updateProduct.id.ToString()))
+                {
+                    if (updateProduct.loyaltyGroup_Id != newLoyaltyGroup.id)
+                    {
+                        updateProduct.loyaltyGroup_Id = (int)newLoyaltyGroup.id!;
+                        await UpdateProduct(updateProduct);
+                    }
+
+                }
+                else if (updateProduct.loyaltyGroup_Id == newLoyaltyGroup.id)
+                {
+                    updateProduct.loyaltyGroup_Id = null;
+                    await UpdateProduct(updateProduct);
+                }
+            }
+            await js.InvokeVoidAsync("alert", "Loyalty Group has been created");
+            // Return to products page
+            navManager.NavigateTo("/loyaltygroups");
+
+        }
+
+        /// <summary>
+        /// Update any products that are in not currently stored as part of the loyalty group
+        /// </summary>
+        /// <param name="productToUpdate">Product that needs to be updated</param>
+        /// <returns>Done</returns>
+        private async Task UpdateProduct(Product productToUpdate)
+        {
+            string endpoint = "https://localhost:7240/api/Products/" + productToUpdate.id;
+            var request = new HttpRequestMessage(
+            HttpMethod.Put,
+            endpoint
+            );
+
+            var client = ClientFactory.CreateClient();
+
+            // Convert new product to json
+            string stringjson = JsonConvert.SerializeObject(productToUpdate);
+            // Add content including new product to request
+            request.Content = new StringContent(stringjson, Encoding.UTF8, "application/json");
+
+            var response = await client.SendAsync(request);
+            response.EnsureSuccessStatusCode();
+
+        }
+
+        private async Task ReplaceImage(InputFileChangeEventArgs e)
+        {
+            string fileNewName = Path.ChangeExtension(Path.GetRandomFileName(), Path.GetExtension(e.File.Name));
+
+            string path = Path.Combine(config.GetValue<string>("FileStore")!, fileNewName);
+            await using FileStream fs = new(path, FileMode.Create);
+            await e.File.OpenReadStream(maxImageSize).CopyToAsync(fs);
+            image = fileNewName;
+        }
+
+
+
+        /// <summary>
+        /// Returns user to loyalty groups page
+        /// </summary>
+        private void Cancel()
+        {
+            if (string.IsNullOrEmpty(newLoyaltyGroup.image))
+            {
+                if (image != "placeholder.png")
+                {
+                    string path = Path.Combine(config.GetValue<string>("FileStore")!, image);
+                    File.Delete(path);
+                }
+            }
+            navManager.NavigateTo("/loyaltygroups");
+        }
+}

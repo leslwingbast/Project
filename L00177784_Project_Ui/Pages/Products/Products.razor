@@ -10,7 +10,7 @@
 <PageTitle>Products</PageTitle>
 
 <h1>Products</h1>
-<a class="btn btn-success mb-2" href="/products/create"><i class="oi oi-plus"></i> Create New Product</a>
+<a class="btn btn-success mb-4" href="/products/create"><i class="oi oi-plus"></i> Create New Product</a>
 
 <div class="row">
     <input type="text" placeholder="Search by Product ID, Name, Barcode or Sku" minlength="3"
@@ -24,13 +24,13 @@
 }
 else
 {
-    <table class="table">
+    <table class="table table table-hover align-content-start">
         <thead>
             <tr>
                 <td>ID</td>
-                <td>Sku</td>
-                <td>Name</td>
-                <td>Barcode</td>
+                <td class="px-4">Sku</td>
+                <td class="px-4">Name</td>
+                <td class="px-4">Barcode</td>
                 <td>Group</td>
             </tr>
         </thead>
@@ -41,9 +41,9 @@ else
                     continue;
                 <tr @onclick="() => Select(currentProduct)">
                     <td>@currentProduct.id</td>
-                    <td>@currentProduct.sku</td>
-                    <td>@currentProduct.name</td>
-                    <td>@currentProduct.barcode</td>
+                    <td class="px-4">@currentProduct.sku</td>
+                    <td class="px-4">@currentProduct.name</td>
+                    <td class="px-4">@currentProduct.barcode</td>
                     @if (currentProduct.productLoyaltyGroup != null)
                     {
                         <td>@currentProduct.productLoyaltyGroup.name</td>
