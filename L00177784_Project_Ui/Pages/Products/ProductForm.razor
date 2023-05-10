@@ -3,6 +3,7 @@
 @using System.Text.Json.Serialization
 @inject NavigationManager navManager
 @inject IHttpClientFactory ClientFactory
+@inject IJSRuntime js
 
 <EditForm Model="@prod" OnValidSubmit="@OnValidSubmit">
     <DataAnnotationsValidator />
@@ -71,14 +72,13 @@
 
         if (response.IsSuccessStatusCode)
         {
-            var stream = await response.Content.ReadAsStreamAsync();
+            var stream = await response.Content.ReadAsStreamAsync();            
             loyaltyGroups = await JsonSerializer.DeserializeAsync<List<LoyaltyGroup>>(stream);
         }
         else
         {
-            // TODO: Handle error - display message
-            System.Console.WriteLine("Something went wrong - Please try again later...");
-            
+            await js.InvokeVoidAsync("alert", "There was a prolem retrieving the loyalty groups");
+
         }
         StateHasChanged();
     }

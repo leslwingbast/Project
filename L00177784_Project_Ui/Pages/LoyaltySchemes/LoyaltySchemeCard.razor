@@ -1,0 +1,35 @@
+﻿@using Data
+@using BootstrapBlazor.Components
+@inject IConfiguration config
+
+ <div class="col-12 col-sm-6 col-lg-3">
+        <Card Color="Color.Dark" IsCenter="true">
+            <HeaderTemplate>
+            @loyaltyScheme.customerId - @loyaltyScheme.loyaltyGroup.name
+            </HeaderTemplate>
+            <BodyTemplate>
+                <div class="col-6">
+            <h5>@loyaltyScheme.remainingItems</h5>
+            </div>
+                <div class="row">
+                    <div class="col-6">
+                    <p class="card-text">away from <strong>free</strong> item</p>
+                    </div>
+                    <div class="col-6">
+                    <ImageViewer Url=@string.Concat("/images/",loyaltyScheme.loyaltyGroup.image)
+                                 FitMode="ObjectFitMode.Fill" style="max-width: 200px;" />
+                </div>
+                </div>
+                
+            </BodyTemplate>
+            <FooterTemplate>
+            <i class="fa-solid fa-star fa-flip" style="color: #f5d400;"></i>
+            </FooterTemplate>
+        </Card>
+  </div>
+
+@code {
+    [Parameter]
+    public LoyaltyScheme loyaltyScheme { get; set; } = new LoyaltyScheme();
+
+}
