@@ -281,7 +281,7 @@ namespace L00177784_Project.Controllers
         /// <returns></returns>
         private LoyaltyScheme UpdateScheme(LoyaltyScheme currentScheme, int quantity, int count)
         {
-            if ((count - quantity) > 0)
+            if ((count - quantity) >= 0)
             {
                 // Update the remaining cuantity and save changes
                 currentScheme.RemainingItems = count - quantity;
