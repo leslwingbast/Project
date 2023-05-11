@@ -1,11 +1,12 @@
 ﻿@using Data
 @using BootstrapBlazor.Components
 @inject IConfiguration config
+@inject NavigationManager navManager
 
  <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-        <Card Color="Color.Dark" IsCenter="true">
+    <Card Color="Color.Dark" IsCenter="true" @onclick="@SelectedScheme">
             <HeaderTemplate>
-            @loyaltyScheme.customerId - @loyaltyScheme.loyaltyGroup.name
+            @loyaltyScheme.customerId - @loyaltyScheme.loyaltyGroup!.name
             </HeaderTemplate>
             <BodyTemplate>
                 <div class="col-6">
@@ -64,4 +65,8 @@
     [Parameter]
     public LoyaltyScheme loyaltyScheme { get; set; } = new LoyaltyScheme();
 
+    void SelectedScheme()
+    {
+        navManager.NavigateTo("/loyaltyschemes/edit/" + loyaltyScheme.id);
+    }
 }

@@ -116,25 +116,6 @@ namespace L00177784_Project.Controllers
             return NoContent();
         }
 
-        // POST: api/LoyaltySchemes
-        /// <summary>
-        /// Endpoint to create Loyalty Scheme in the database
-        /// </summary>
-        /// <param name="loyaltyScheme">Object of type LoyaltyScheme</param>
-        /// <returns>Saved Loyalty Scheme</returns>
-        [HttpPost]
-        public async Task<ActionResult<LoyaltyScheme>> PostLoyaltyScheme(LoyaltyScheme loyaltyScheme)
-        {
-            if (_context.LoyaltySchemes == null)
-            {
-                return Problem("Entity set 'LoyaltyGroupsContext.LoyaltySchemes'  is null.");
-            }
-            _context.LoyaltySchemes.Add(loyaltyScheme);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetLoyaltyScheme", new { id = loyaltyScheme.Id }, loyaltyScheme);
-        }
-
         // DELETE: api/LoyaltySchemes/5
         /// <summary>
         /// Endpoint to delete a loyalty scheme
