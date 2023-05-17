@@ -318,6 +318,7 @@
     {
         string fileNewName = Path.ChangeExtension(Path.GetRandomFileName(), Path.GetExtension(e.File.Name));
 
+
         string path = Path.Combine(config.GetValue<string>("FileStore")!, fileNewName);
         await using FileStream fs = new(path, FileMode.Create);
         await e.File.OpenReadStream(maxImageSize).CopyToAsync(fs);

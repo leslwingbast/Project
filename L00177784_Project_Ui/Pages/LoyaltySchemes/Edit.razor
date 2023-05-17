@@ -1,0 +1,202 @@
+﻿@page "/loyaltyschemes/edit/{schemeId:int}"
+
+@using Data
+@using System.Text
+@using Newtonsoft.Json
+@using Newtonsoft.Json.Linq
+@using BootstrapBlazor.Components
+@inject IHttpClientFactory ClientFactory
+@inject NavigationManager navManager
+@inject IJSRuntime js
+@inject IConfiguration config
+
+<h3>Edit Loyalty Scheme</h3>
+
+
+@if (editLoyaltyScheme == null)
+{
+<p>loading ....</p>
+}
+else
+
+{
+    <div class="align-content-center"> 
+        <EditForm Model="@editLoyaltyScheme" OnValidSubmit="@EditLoyaltyScheme">
+            <div class="container alert-secondary p-4 col-6 mx-auto" style="min-width: 300px;">
+                <div class="row-1 my-1">
+                    <div class="form-group col">
+                        <label for="name">Customer Number:</label>
+                        <input type="text" class="form-control" @bind="@editLoyaltyScheme.customerId" disabled>                    
+                    </div>
+                </div>
+                @if (editLoyaltyScheme.loyaltyGroup != null)
+                {
+                    <div class="row-1 my-1">
+                        <div class="form-group col">
+                            <label for="name">Loyalty Scheme:</label>
+                            <input type="text" class="form-control" @bind="@editLoyaltyScheme.loyaltyGroup.name" disabled>
+                        </div>
+                    </div>
+                }
+                <div class="row-1 my-1">
+                    <div class="form-group col">
+                        <label for="name">Remaining Items:</label>
+                        <input type="number" class="form-control" value="@editLoyaltyScheme.remainingItems" @onchange="UpdateStars">
+                    </div>
+                </div>
+                <div class="row-1 my-1">
+                    <div class="form-group col">
+                        <label for="name">Loyalty Scheme:</label>
+                        <Rate Value="@stars" ValueChanged="@OnValueChanged" Max="@max"/>
+                    </div>
+                </div>
+            
+            <div class="row my-1">
+                <button type="submit" class="btn col-sm mt-4 mx-1 btn-success">Submit</button>
+                <div type="submit" class="btn btn-warning col-sm mt-4 mx-1" @onclick="Cancel">Cancel</div>
+                <div type="submit" class="btn btn-danger col-sm mt-4 mx-1" @onclick="DeleteLoyaltyScheme">Delete</div>
+            </div>
+            </div>
+        </EditForm>
+
+    </div>
+}
+
+
+@code {
+    [Parameter]
+    public int schemeId { get; set; }
+    private LoyaltyScheme editLoyaltyScheme = new LoyaltyScheme();
+    private LoyaltyGroup connectedLoytaltyGroup = new LoyaltyGroup();
+    private string schemeEndpoint { get; set; } = string.Empty;
+    private string groupEndpoint { get; set; } = string.Empty;
+    private double stars { get; set; }
+    private int max { get; set; }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        schemeEndpoint = string.Concat(config.GetValue<string>("BaseApiUrl")!, "/loyaltyschemes/", schemeId.ToString());
+        await GetScheme(schemeId);
+
+    }
+
+    private async Task GetScheme(int schemeId)
+    {
+        var client = ClientFactory.CreateClient();
+
+        var request = new HttpRequestMessage(
+                        HttpMethod.Get,
+                        schemeEndpoint
+
+                    );
+
+        var response = await client.SendAsync(request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var responseData = await response.Content.ReadAsStringAsync();
+
+            editLoyaltyScheme = JsonConvert.DeserializeObject<LoyaltyScheme>(responseData)!;
+            groupEndpoint = string.Concat(config.GetValue<string>("BaseApiUrl")!, "/loyaltygroups/", editLoyaltyScheme.loyaltyGroup_Id.ToString());
+            await UpdateConnectedLoyaltyGroup(groupEndpoint);
+            stars = (double)editLoyaltyScheme.loyaltyGroup!.threshold! - editLoyaltyScheme.remainingItems;
+            max = (int)editLoyaltyScheme.loyaltyGroup.threshold;
+        }
+        else
+        {
+            await js.InvokeVoidAsync("alert", "There was a problem retrieving this product");
+        }
+    }
+
+    private async Task UpdateConnectedLoyaltyGroup(string endpoint)
+    {
+        var groupClient = ClientFactory.CreateClient();
+        var groupRequest = new HttpRequestMessage(
+                        HttpMethod.Get,
+                        endpoint
+
+                    );
+        var groupResponse = await groupClient.SendAsync(groupRequest);
+
+        if (groupResponse.IsSuccessStatusCode)
+        {
+            var groupResponseData = await groupResponse.Content.ReadAsStringAsync();
+
+            connectedLoytaltyGroup = JsonConvert.DeserializeObject<LoyaltyGroup>(groupResponseData)!;
+            editLoyaltyScheme.loyaltyGroup = connectedLoytaltyGroup;
+        }
+        else
+        {
+            await js.InvokeVoidAsync("alert", "There was a problem retrieving this product");
+        }
+    }
+
+    private async Task EditLoyaltyScheme()
+    {
+        var request = new HttpRequestMessage(
+            HttpMethod.Put,
+            schemeEndpoint
+        );
+
+        var client = ClientFactory.CreateClient();
+
+        // Convert new product to json
+        string stringjson = JsonConvert.SerializeObject(editLoyaltyScheme);
+        // Add content including new product to request
+        request.Content = new StringContent(stringjson, Encoding.UTF8, "application/json");
+
+        var response = await client.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+        await js.InvokeVoidAsync("alert", "Loyalty Scheme updated");
+        navManager.NavigateTo("/loyaltyschemes");
+    }
+
+    private void OnValueChanged(double val)
+    {
+        stars = val;
+        editLoyaltyScheme.remainingItems = (int)editLoyaltyScheme.loyaltyGroup!.threshold! - (int)stars;
+    }
+
+    private void UpdateStars(ChangeEventArgs e)
+    {
+        editLoyaltyScheme.remainingItems = int.Parse(e.Value!.ToString()!);
+        stars = (double)editLoyaltyScheme.loyaltyGroup!.threshold! - editLoyaltyScheme.remainingItems;
+    }
+
+
+    /// <summary>
+    /// Returns user to loyalty schemes page
+    /// </summary>
+    private void Cancel()
+    {
+        navManager.NavigateTo("/loyaltyschemes");
+    }
+
+    private async Task DeleteLoyaltyScheme()
+    {
+
+        bool confirmed = await js.InvokeAsync<bool>("confirm", $"Are you sure you want to delete the loyalty scheme for {editLoyaltyScheme.customerId}?");
+        if (confirmed)
+        {
+            var groupClient = ClientFactory.CreateClient();
+            var groupRequest = new HttpRequestMessage(
+                            HttpMethod.Delete,
+                            schemeEndpoint
+
+                        );
+            var groupResponse = await groupClient.SendAsync(groupRequest);
+
+            if (groupResponse.IsSuccessStatusCode)
+            {
+                await js.InvokeVoidAsync("alert", "Loyalty Scheme has been deleted");
+                navManager.NavigateTo("/loyaltyschemes");
+            }
+        }
+        else
+        {
+            navManager.NavigateTo("/loyaltyschemes");
+        }
+    }
+
+}

@@ -128,6 +128,10 @@ namespace L00177784_Project.Controllers
                         return Problem("Product Barcode already exists.");
                     }
                 }
+                if (string.IsNullOrEmpty(product.Barcode) && product.Sku == null)
+                    {
+                        return Problem("Product Barcode oro SKU must be entered.");
+                    }
                 _context.Products.Add(product);
                 await _context.SaveChangesAsync();
                 return CreatedAtAction("GetProduct", new { id = product.Id }, product);

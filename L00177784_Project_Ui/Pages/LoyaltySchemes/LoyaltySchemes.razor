@@ -1,0 +1,129 @@
+﻿@page "/"
+@page "/loyaltyschemes"
+
+@using Data
+@using System.Text.Json
+@using System.Text.Json.Serialization
+@inject IHttpClientFactory ClientFactory
+@inject NavigationManager navManager
+@inject IConfiguration config
+@inject IJSRuntime js
+
+<div class="row">
+    <div class="col">
+        <h3>LoyaltySchemes</h3>
+    </div>
+    <div class="col align-self-end">
+            <label class="float-end">Search Scheme: </label>
+        </div>
+    <div class="col-4 align-self-end">
+            <input type="text"  placeholder="Search by customer number" style="min-width:20em"
+               @bind="filterLoyaltyScheme"
+               @bind:event="oninput" />
+        </div>
+
+</div>
+
+<div class="row">
+    @foreach(var scheme in allLoyaltySchemes)
+    {
+        if (!IsVisible(scheme))
+            continue;
+        <LoyaltySchemeCard loyaltyScheme="scheme" />
+    }
+</div>
+
+@code {
+    private List<LoyaltyScheme> allLoyaltySchemes = new List<LoyaltyScheme>();
+    private List<LoyaltyScheme> filteredLoyaltySchemes = new List<LoyaltyScheme>();
+    private List<LoyaltyGroup> allLoyaltyGroups = new List<LoyaltyGroup>();
+    private string allLoyaltyGroupsEndpoint = string.Empty;
+    private string allLoyaltySchemeEndpoint = string.Empty;
+    private string filterLoyaltyScheme = string.Empty;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        allLoyaltyGroupsEndpoint = string.Concat(config.GetValue<string>("BaseApiUrl")!, "/loyaltygroups");
+        allLoyaltySchemeEndpoint = string.Concat(config.GetValue<string>("BaseApiUrl")!, "/loyaltyschemes");
+        await LoyaltyGroupApiCall();
+        await LoyaltySchemeApiCall();
+        filteredLoyaltySchemes = allLoyaltySchemes;
+
+    }
+
+    private async Task LoyaltyGroupApiCall()
+    {
+        var request = new HttpRequestMessage(
+                        HttpMethod.Get,
+                        allLoyaltyGroupsEndpoint
+                    );
+
+        var client = ClientFactory.CreateClient();
+
+        var response = await client.SendAsync(request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var stream = await response.Content.ReadAsStreamAsync();
+            allLoyaltyGroups = await JsonSerializer.DeserializeAsync<List<LoyaltyGroup>>(stream);
+        }
+        else
+        {
+            await js.InvokeVoidAsync("alert", "There was a prolem retrieving the loyalty groups");
+        }
+        StateHasChanged();
+    }
+
+    private async Task LoyaltySchemeApiCall()
+    {
+        var request = new HttpRequestMessage(
+                        HttpMethod.Get,
+                       allLoyaltySchemeEndpoint
+                    );
+
+        var client = ClientFactory.CreateClient();
+
+        var response = await client.SendAsync(request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var stream = await response.Content.ReadAsStreamAsync();
+            allLoyaltySchemes = await JsonSerializer.DeserializeAsync<List<LoyaltyScheme>>(stream);
+
+            foreach(LoyaltyScheme loyaltyScheme in allLoyaltySchemes!)
+            {
+                loyaltyScheme.loyaltyGroup = allLoyaltyGroups.FirstOrDefault(x => x.id == loyaltyScheme.loyaltyGroup_Id);
+            }
+        }
+        else
+        {
+            await js.InvokeVoidAsync("alert", "There was a prolem retrieving the loyalty groups");
+        }
+        StateHasChanged();
+    }
+
+
+    private void SelectedScheme(LoyaltyScheme selectedScheme)
+    {
+        navManager.NavigateTo("/loyaltyscheme/edit/" + selectedScheme.id);
+    }
+
+
+    private bool IsVisible(LoyaltyScheme loyaltySchemeSearch)
+    {
+        if (string.IsNullOrEmpty(filterLoyaltyScheme))
+        {
+            return true;
+        }
+
+        if (loyaltySchemeSearch.id.ToString()!.Contains(filterLoyaltyScheme, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+}

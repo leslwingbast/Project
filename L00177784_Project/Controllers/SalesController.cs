@@ -40,22 +40,25 @@ namespace L00177784_Project.Controllers
 
         private Product selectedProduct = new Product();
 
-        private LoyaltyGroup selectedLoyaltyGroup = new LoyaltyGroup();
-        
         /// <summary>
-        /// Endpoint to return all sales
+        /// 
         /// </summary>
-        /// <returns>Lost of sales</returns>
-        // GET: api/Sales
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Sale>>> GetSales()
-        {
-          if (_context.Sales == null)
-          {
-              return NotFound();
-          }
-            return await _context.Sales.ToListAsync();
-        }
+        private LoyaltyGroup selectedLoyaltyGroup = new LoyaltyGroup();
+
+        ///// <summary>
+        ///// Endpoint to return all sales
+        ///// </summary>
+        ///// <returns>Lost of sales</returns>
+        //// GET: api/Sales
+        //[HttpGet]
+        //public async Task<ActionResult<IEnumerable<Sale>>> GetSales()
+        //{
+        //    if (_context.Sales == null)
+        //    {
+        //        return NotFound();
+        //    }
+        //    return await _context.Sales.ToListAsync();
+        //}
 
         /// <summary>
         /// Endpoint to get sale by Id
@@ -66,10 +69,10 @@ namespace L00177784_Project.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Sale>> GetSale(int id)
         {
-          if (_context.Sales == null)
-          {
-              return NotFound();
-          }
+            if (_context.Sales == null)
+            {
+                return NotFound();
+            }
             var sale = await _context.Sales.FindAsync(id);
 
             if (sale == null)
@@ -80,41 +83,42 @@ namespace L00177784_Project.Controllers
             return sale;
         }
 
-        // PUT: api/Sales/5
-        /// <summary>
-        /// Update a sale based on an Id
-        /// </summary>
-        /// <param name="id">Id of sale to be updated</param>
-        /// <param name="sale">Object of sale type that will update sale with above id</param>
-        /// <returns></returns>
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutSale(int id, Sale sale)
-        {
-            if (id != sale.Id)
-            {
-                return BadRequest();
-            }
+        //// PUT: api/Sales/5
+        ///// <summary>
+        ///// Update a sale based on an Id
+        ///// </summary>
+        ///// <param name="id">Id of sale to be updated</param>
+        ///// <param name="sale">Object of sale type that will update sale with above id</param>
+        ///// <returns></returns>
+        //[HttpPut("{id}")]
+        //public async Task<IActionResult> PutSale(int id, Sale sale)
+        //{
+        //    if (id != sale.Id)
+        //    {
+        //        return BadRequest();
+        //    }
 
-            _context.Entry(sale).State = EntityState.Modified;
+        //    _context.Entry(sale).State = EntityState.Modified;
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!SaleExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+        //    try
+        //    {
+        //        await _context.SaveChangesAsync();
+        //    }
+        //    catch (DbUpdateConcurrencyException)
+        //    {
+        //        if (!SaleExists(id))
+        //        {
+        //            return NotFound();
+        //        }
+        //        else
+        //        {
+        //            throw;
+        //        }
+        //    }
 
-            return NoContent();
-        }
+        //    return NoContent();
+        //}
+
 
         // POST: api/Sales
         /// <summary>
@@ -139,7 +143,7 @@ namespace L00177784_Project.Controllers
             }
             else
             {
-                if (sale.Barcode != null)
+                if (!string.IsNullOrEmpty(sale.Barcode))
                 {
                     productByBarcode = CheckProductByBarcode(sale.Barcode);
                     if (productByBarcode == true) { GetProductByBarcode(sale.Barcode); }
@@ -176,36 +180,7 @@ namespace L00177784_Project.Controllers
             
         }
 
-        /// <summary>
-        /// Endpoint to delete a sale based on Id
-        /// </summary>
-        /// <param name="id">Id of sale to be deleted</param>
-        /// <returns>Task Done</returns>
-        // DELETE: api/Sales/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteSale(int id)
-        {
-            if (_context.Sales == null)
-            {
-                return NotFound();
-            }
-            var sale = await _context.Sales.FindAsync(id);
-            if (sale == null)
-            {
-                return NotFound();
-            }
 
-            _context.Sales.Remove(sale);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        /// <summary>
-        /// Private method to see if sale exists based on Id
-        /// </summary>
-        /// <param name="id">Id of sale to check</param>
-        /// <returns>Boolean of whether sale exists or not</returns>
         private bool SaleExists(int id)
         {
             return (_context.Sales?.Any(e => e.Id == id)).GetValueOrDefault();
@@ -281,7 +256,7 @@ namespace L00177784_Project.Controllers
         /// <returns></returns>
         private LoyaltyScheme UpdateScheme(LoyaltyScheme currentScheme, int quantity, int count)
         {
-            if ((count - quantity) > 0)
+            if ((count - quantity) >= 0)
             {
                 // Update the remaining cuantity and save changes
                 currentScheme.RemainingItems = count - quantity;

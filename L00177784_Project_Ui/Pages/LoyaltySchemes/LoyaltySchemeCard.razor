@@ -1,0 +1,72 @@
+﻿@using Data
+@using BootstrapBlazor.Components
+@inject IConfiguration config
+@inject NavigationManager navManager
+
+ <div class="col-12 col-sm-6 col-md-4 col-lg-3 row g-2 mx-auto">
+    <Card Color="Color.Dark" IsCenter="true" @onclick="@SelectedScheme">
+            <HeaderTemplate>
+            @loyaltyScheme.customerId - @loyaltyScheme.loyaltyGroup!.name
+            </HeaderTemplate>
+            <BodyTemplate>
+                <div class="col-6">
+                    @if (loyaltyScheme.remainingItems == 0)
+                        {
+                            <h4><i class="fa-solid fa-star fa-flip" style="color: #f5d400;" /></h4>
+                        }
+                else
+                        {
+                            <h4>@loyaltyScheme.remainingItems</h4>
+                        }
+            </div>
+                <div class="row">
+                    <div class="col-6">
+                        @if(loyaltyScheme.remainingItems == 1)
+                    {
+                        <p class="card-text">item away from a <strong>free</strong> @loyaltyScheme.loyaltyGroup.name</p>
+                    }
+                    else if (loyaltyScheme.remainingItems == 0)
+                    {
+                        <p class="card-text"><strong>You have earned a free</strong> @loyaltyScheme.loyaltyGroup.name</p>
+                    }
+                    else
+                    {
+                        <p class="card-text">items away from a <strong>free</strong> @loyaltyScheme.loyaltyGroup.name</p>
+                    }
+
+                </div>
+                    <div class="col-6">
+                    <ImageViewer Url=@string.Concat("/images/",loyaltyScheme.loyaltyGroup.image)
+                                 FitMode="ObjectFitMode.Fill" style="max-width: 200px;" />
+                </div>
+                </div>
+                
+            </BodyTemplate>
+            <FooterTemplate>
+            <div class="row-1 d-flex justify-content-between">
+                    
+                        @for (int i = 0; i < loyaltyScheme.loyaltyGroup.threshold - loyaltyScheme.remainingItems; i++)
+                    {
+                    <i class="fa-solid fa-star" />
+                   
+                    }
+                        @for (int i = 0; i < loyaltyScheme.remainingItems; i++)
+                    {
+                    <i class="fa-regular fa-star" />
+                    }
+                <i class="fa-solid fa-star fa-flip" style="color: #f5d400;" />
+                </div>
+            
+            </FooterTemplate>
+        </Card>
+  </div>
+
+@code {
+    [Parameter]
+    public LoyaltyScheme loyaltyScheme { get; set; } = new LoyaltyScheme();
+
+    void SelectedScheme()
+    {
+        navManager.NavigateTo("/loyaltyschemes/edit/" + loyaltyScheme.id);
+    }
+}
