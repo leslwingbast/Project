@@ -6,17 +6,17 @@
 @inject IHttpClientFactory ClientFactory
 @inject NavigationManager navManager
 
-<h3>Loyalty Groups</h3>
-<a class="btn btn-success mb-4" href="/loyaltygroups/create"><i class="oi oi-plus"></i> Create New Loyalty Group</a>
-
 <div class="row">
-    <div class="col">
-    <input type="text" placeholder="Search by Loyalty Group ID or Name" style="min-width:20em;"
+    <div class="col-sm-12 col-lg">
+        <h3>Loyalty Groups</h3>
+    </div>
+    <div class="col-sm-12 col-lg my-sm-2 my-lg-1">
+        <a class="btn btn-success mb-2 mx-lg-2" href="/loyaltygroups/create"><i class="oi oi-plus"></i> Create New Loyalty Group</a>
+    </div>
+    <div class="col align-self-center">
+    <input class="input-group col-12" type="text" placeholder="Search by Loyalty Group ID or Name" style="min-width:20em;"
            @bind="filterLoyaltyGroup"
            @bind:event="oninput" />
-    </div>
-    <div class="col align-content-end">
-        <p>Select a loyalty group below to edit</p>
     </div>
 </div>
 
@@ -67,14 +67,32 @@ else
 }
 
 @code {
+
+    /// <summary>
+    /// List for all loyatly groups and also filtered loyalty groups to work with search
+    /// </summary>
     private List<LoyaltyGroup>? allLoyaltyGroups, filteredLoyaltyGroups = new List<LoyaltyGroup>();
 
+    /// <summary>
+    /// Endpoint for loyalty groups
+    /// </summary>
     private string allLoyaltyGroupsEndpoint = "https://localhost:7240/api/LoyaltyGroups";
 
+    /// <summary>
+    /// Filter for searching loyalty groups
+    /// </summary>
     string filterLoyaltyGroup = string.Empty;
 
+    /// <summary>
+    /// Placeholder image should one not be uploaded
+    /// </summary>
     string placholderImage = "placeholder.png";
 
+
+    /// <summary>
+    /// Initialisation to get loyalty groups and also set filtered list to all loyatly groups
+    /// </summary>
+    /// <returns></returns>
     protected override async Task OnInitializedAsync()
     {
         await LoyaltyAPICall();
@@ -82,7 +100,10 @@ else
     }
 
 
-
+    /// <summary>
+    /// Calll to get loyalty groups
+    /// </summary>
+    /// <returns></returns>
     private async Task LoyaltyAPICall()
     {
         var request = new HttpRequestMessage(
@@ -107,26 +128,39 @@ else
         StateHasChanged();
     }
 
+    /// <summary>
+    /// Reads search input and filters whether it should be shown or not
+    /// </summary>
+    /// <param name="loyaltyGroupSearch"></param>
+    /// <returns>Boolean if matching search criteria</returns>
     private bool IsVisible(LoyaltyGroup loyaltyGroupSearch)
     {
+        // Return true if search is empty
         if (string.IsNullOrEmpty(filterLoyaltyGroup))
         {
             return true;
         }
 
+        // Return true if name matches
         if (loyaltyGroupSearch.name!.Contains(filterLoyaltyGroup, StringComparison.OrdinalIgnoreCase))
         {
             return true;
         }
-       
+
+        // Return true if Id matches
         if (loyaltyGroupSearch.id.ToString()!.Contains(filterLoyaltyGroup, StringComparison.OrdinalIgnoreCase))
         {
             return true;
         }
 
+        // Return false if not matching above criteria
         return false;
     }
 
+    /// <summary>
+    /// Brings user to edit the selected loyalty group
+    /// </summary>
+    /// <param name="selectedGroup">Loyalty group to be edited</param>
     private void Select(LoyaltyGroup selectedGroup)
     {
         navManager.NavigateTo("/loyaltygroups/edit/" + selectedGroup.id);

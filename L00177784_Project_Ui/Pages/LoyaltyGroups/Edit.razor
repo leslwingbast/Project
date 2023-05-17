@@ -230,7 +230,7 @@
     /// <returns>Done</returns>
     private async Task EditLoyaltyGroup()
     {
-
+        // Checks and updates product's loyalty scheme id if any have been changed through loyalty group form
         foreach(Product updateProduct in products)
         {
             if(SelectedValues.Contains(updateProduct.id.ToString()))
@@ -248,6 +248,8 @@
                 await UpdateProduct(updateProduct);
             }     
         }
+
+        // Checks to ensure required fields are inputed
         if (string.IsNullOrEmpty(editLoyaltyGroup.name))
         {
             await js.InvokeVoidAsync("alert", "Group name required");
@@ -314,6 +316,11 @@
 
     }
 
+    /// <summary>
+    /// Uploads image to images folder and updates image with new image filename
+    /// </summary>
+    /// <param name="e"></param>
+    /// <returns></returns>
     private async Task ReplaceImage(InputFileChangeEventArgs e)
     {
         string fileNewName = Path.ChangeExtension(Path.GetRandomFileName(), Path.GetExtension(e.File.Name));
@@ -325,6 +332,10 @@
         image = fileNewName;
     }
 
+    /// <summary>
+    /// API call to deleted current loyalty group
+    /// </summary>
+    /// <returns>Done</returns>
     private async Task DeleteLoyaltyGroup()
     {
         bool confirmed = await js.InvokeAsync<bool>("confirm", $"Are you sure you want to delete {editLoyaltyGroup.name}?");
