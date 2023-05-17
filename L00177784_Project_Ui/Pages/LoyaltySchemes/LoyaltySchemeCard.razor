@@ -23,15 +23,15 @@
                     <div class="col-6">
                         @if(loyaltyScheme.remainingItems == 1)
                     {
-                        <p class="card-text">item away from a <strong>free</strong> @loyaltyScheme.loyaltyGroup.name</p>
+                        <p class="card-text">item away from a <strong>free</strong> @loyaltyScheme.loyaltyGroup!.name</p>
                     }
                     else if (loyaltyScheme.remainingItems == 0)
                     {
-                        <p class="card-text"><strong>You have earned a free</strong> @loyaltyScheme.loyaltyGroup.name</p>
+                        <p class="card-text"><strong>You have earned a free</strong> @loyaltyScheme.loyaltyGroup!.name</p>
                     }
                     else
                     {
-                        <p class="card-text">items away from a <strong>free</strong> @loyaltyScheme.loyaltyGroup.name</p>
+                        <p class="card-text">items away from a <strong>free</strong> @loyaltyScheme.loyaltyGroup!.name</p>
                     }
 
                 </div>
@@ -45,7 +45,7 @@
             <FooterTemplate>
             <div class="row-1 d-flex justify-content-between">
                     
-                        @for (int i = 0; i < loyaltyScheme.loyaltyGroup.threshold - loyaltyScheme.remainingItems; i++)
+                        @for (int i = 0; i < loyaltyScheme.loyaltyGroup!.threshold - loyaltyScheme.remainingItems; i++)
                     {
                     <i class="fa-solid fa-star" />
                    

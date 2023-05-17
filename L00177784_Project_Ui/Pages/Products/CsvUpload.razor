@@ -54,6 +54,7 @@
     /// </summary>
     private List<Product> csvProducts = new List<Product>();
 
+
     /// <summary>
     /// Filename of csv for upload
     /// </summary>
@@ -119,7 +120,7 @@
             {
                 // Read lines and add to product list
                 var line = reader.ReadLine();
-                List<string> productStringList = line.Split(',').ToList();
+                    List<string> productStringList = line.Split(',').ToList();
                 csvProducts.Add(new Product
                 {
                     barcode = productStringList[0],
