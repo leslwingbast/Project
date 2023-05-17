@@ -276,7 +276,7 @@
         {
             string fileNewName = Path.ChangeExtension(Path.GetRandomFileName(), Path.GetExtension(e.File.Name));
 
-            string path = $"{env.WebRootPath}\\{fileNewName}";
+            string path = $"{env.WebRootPath}\\images\\{fileNewName}";
             await using FileStream fs = new(path, FileMode.Create);
             await e.File.OpenReadStream(maxImageSize).CopyToAsync(fs);
             image = fileNewName;
@@ -293,7 +293,7 @@
             {
                 if (image != "placeholder.png")
                 {
-                string path = $"{env.WebRootPath}\\{image}";
+                string path = $"{env.WebRootPath}\\images\\{image}";
                     File.Delete(path);
                 }
             }
