@@ -10,12 +10,18 @@
 <a class="btn btn-success mb-4" href="/loyaltygroups/create"><i class="oi oi-plus"></i> Create New Loyalty Group</a>
 
 <div class="row">
-    <input type="text" placeholder="Search by Loyalty Group ID or Name"
+    <div class="col">
+    <input type="text" placeholder="Search by Loyalty Group ID or Name" style="min-width:20em;"
            @bind="filterLoyaltyGroup"
            @bind:event="oninput" />
+    </div>
+    <div class="col align-content-end">
+        <p>Select a loyalty group below to edit</p>
+    </div>
 </div>
-<br/>
-<p>Select a loyalty group below to edit</p>
+
+
+
 @if (allLoyaltyGroups == null || filteredLoyaltyGroups == null)
 {
     <p>Loading ....</p>

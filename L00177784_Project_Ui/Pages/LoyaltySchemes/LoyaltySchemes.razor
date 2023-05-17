@@ -1,4 +1,5 @@
-﻿@page "/loyaltyschemes"
+﻿@page "/"
+@page "/loyaltyschemes"
 
 @using Data
 @using System.Text.Json
@@ -8,21 +9,37 @@
 @inject IConfiguration config
 @inject IJSRuntime js
 
-<h3>LoyaltySchemes</h3>
+<div class="row">
+    <div class="col">
+        <h3>LoyaltySchemes</h3>
+    </div>
+    <div class="col align-self-end">
+            <label class="float-end">Search Scheme: </label>
+        </div>
+    <div class="col-4 align-self-end">
+            <input type="text"  placeholder="Search by customer number" style="min-width:20em"
+               @bind="filterLoyaltyScheme"
+               @bind:event="oninput" />
+        </div>
 
-<div class="row g-2">
+</div>
+
+<div class="row">
     @foreach(var scheme in allLoyaltySchemes)
     {
+        if (!IsVisible(scheme))
+            continue;
         <LoyaltySchemeCard loyaltyScheme="scheme" />
-
     }
 </div>
 
 @code {
     private List<LoyaltyScheme> allLoyaltySchemes = new List<LoyaltyScheme>();
+    private List<LoyaltyScheme> filteredLoyaltySchemes = new List<LoyaltyScheme>();
     private List<LoyaltyGroup> allLoyaltyGroups = new List<LoyaltyGroup>();
     private string allLoyaltyGroupsEndpoint = string.Empty;
     private string allLoyaltySchemeEndpoint = string.Empty;
+    private string filterLoyaltyScheme = string.Empty;
 
 
     protected override async Task OnInitializedAsync()
@@ -32,6 +49,7 @@
         allLoyaltySchemeEndpoint = string.Concat(config.GetValue<string>("BaseApiUrl")!, "/loyaltyschemes");
         await LoyaltyGroupApiCall();
         await LoyaltySchemeApiCall();
+        filteredLoyaltySchemes = allLoyaltySchemes;
 
     }
 
@@ -90,6 +108,22 @@
     private void SelectedScheme(LoyaltyScheme selectedScheme)
     {
         navManager.NavigateTo("/loyaltyscheme/edit/" + selectedScheme.id);
+    }
+
+
+    private bool IsVisible(LoyaltyScheme loyaltySchemeSearch)
+    {
+        if (string.IsNullOrEmpty(filterLoyaltyScheme))
+        {
+            return true;
+        }
+
+        if (loyaltySchemeSearch.id.ToString()!.Contains(filterLoyaltyScheme, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return false;
     }
 
 }

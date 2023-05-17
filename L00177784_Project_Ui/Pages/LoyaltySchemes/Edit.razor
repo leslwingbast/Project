@@ -50,6 +50,12 @@ else
                         <Rate Value="@stars" ValueChanged="@OnValueChanged" Max="@max"/>
                     </div>
                 </div>
+            
+            <div class="row my-1">
+                <button type="submit" class="btn col-sm mt-4 mx-1 btn-success">Submit</button>
+                <div type="submit" class="btn btn-warning col-sm mt-4 mx-1" @onclick="Cancel">Cancel</div>
+                <div type="submit" class="btn btn-danger col-sm mt-4 mx-1" @onclick="DeleteLoyaltyScheme">Delete</div>
+            </div>
             </div>
         </EditForm>
 
@@ -94,7 +100,7 @@ else
             editLoyaltyScheme = JsonConvert.DeserializeObject<LoyaltyScheme>(responseData)!;
             groupEndpoint = string.Concat(config.GetValue<string>("BaseApiUrl")!, "/loyaltygroups/", editLoyaltyScheme.loyaltyGroup_Id.ToString());
             await UpdateConnectedLoyaltyGroup(groupEndpoint);
-            stars = (double)editLoyaltyScheme.loyaltyGroup.threshold - editLoyaltyScheme.remainingItems;
+            stars = (double)editLoyaltyScheme.loyaltyGroup!.threshold! - editLoyaltyScheme.remainingItems;
             max = (int)editLoyaltyScheme.loyaltyGroup.threshold;
         }
         else
@@ -117,7 +123,7 @@ else
         {
             var groupResponseData = await groupResponse.Content.ReadAsStringAsync();
 
-            connectedLoytaltyGroup = JsonConvert.DeserializeObject<LoyaltyGroup>(groupResponseData);
+            connectedLoytaltyGroup = JsonConvert.DeserializeObject<LoyaltyGroup>(groupResponseData)!;
             editLoyaltyScheme.loyaltyGroup = connectedLoytaltyGroup;
         }
         else
@@ -128,19 +134,69 @@ else
 
     private async Task EditLoyaltyScheme()
     {
+        var request = new HttpRequestMessage(
+            HttpMethod.Put,
+            schemeEndpoint
+        );
+
+        var client = ClientFactory.CreateClient();
+
+        // Convert new product to json
+        string stringjson = JsonConvert.SerializeObject(editLoyaltyScheme);
+        // Add content including new product to request
+        request.Content = new StringContent(stringjson, Encoding.UTF8, "application/json");
+
+        var response = await client.SendAsync(request);
+        response.EnsureSuccessStatusCode();
         await js.InvokeVoidAsync("alert", "Loyalty Scheme updated");
+        navManager.NavigateTo("/loyaltyschemes");
     }
 
     private void OnValueChanged(double val)
     {
         stars = val;
-        editLoyaltyScheme.remainingItems = (int)editLoyaltyScheme.loyaltyGroup.threshold - (int)stars;
+        editLoyaltyScheme.remainingItems = (int)editLoyaltyScheme.loyaltyGroup!.threshold! - (int)stars;
     }
 
     private void UpdateStars(ChangeEventArgs e)
     {
-        editLoyaltyScheme.remainingItems = int.Parse(e.Value.ToString());
-        stars = (double)editLoyaltyScheme.loyaltyGroup.threshold - editLoyaltyScheme.remainingItems;
+        editLoyaltyScheme.remainingItems = int.Parse(e.Value!.ToString()!);
+        stars = (double)editLoyaltyScheme.loyaltyGroup!.threshold! - editLoyaltyScheme.remainingItems;
+    }
+
+
+    /// <summary>
+    /// Returns user to loyalty schemes page
+    /// </summary>
+    private void Cancel()
+    {
+        navManager.NavigateTo("/loyaltyschemes");
+    }
+
+    private async Task DeleteLoyaltyScheme()
+    {
+
+        bool confirmed = await js.InvokeAsync<bool>("confirm", $"Are you sure you want to delete the loyalty scheme for {editLoyaltyScheme.customerId}?");
+        if (confirmed)
+        {
+            var groupClient = ClientFactory.CreateClient();
+            var groupRequest = new HttpRequestMessage(
+                            HttpMethod.Delete,
+                            schemeEndpoint
+
+                        );
+            var groupResponse = await groupClient.SendAsync(groupRequest);
+
+            if (groupResponse.IsSuccessStatusCode)
+            {
+                await js.InvokeVoidAsync("alert", "Loyalty Scheme has been deleted");
+                navManager.NavigateTo("/loyaltyschemes");
+            }
+        }
+        else
+        {
+            navManager.NavigateTo("/loyaltyschemes");
+        }
     }
 
 }
