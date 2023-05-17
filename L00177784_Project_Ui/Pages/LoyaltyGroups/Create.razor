@@ -6,6 +6,8 @@
 @using Newtonsoft.Json.Linq
 @using System.Text.Json.Serialization
 @using BootstrapBlazor.Components
+@using System.IO
+@inject IWebHostEnvironment env
 @inject IHttpClientFactory ClientFactory
 @inject NavigationManager navManager
 @inject IConfiguration config
@@ -274,7 +276,7 @@
         {
             string fileNewName = Path.ChangeExtension(Path.GetRandomFileName(), Path.GetExtension(e.File.Name));
 
-            string path = Path.Combine(config.GetValue<string>("FileStore")!, fileNewName);
+            string path = $"{env.WebRootPath}\\{fileNewName}";
             await using FileStream fs = new(path, FileMode.Create);
             await e.File.OpenReadStream(maxImageSize).CopyToAsync(fs);
             image = fileNewName;
@@ -291,7 +293,7 @@
             {
                 if (image != "placeholder.png")
                 {
-                    string path = Path.Combine(config.GetValue<string>("FileStore")!, image);
+                string path = $"{env.WebRootPath}\\{image}";
                     File.Delete(path);
                 }
             }

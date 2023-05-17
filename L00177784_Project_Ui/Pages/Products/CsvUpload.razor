@@ -8,6 +8,7 @@
 @inject IConfiguration config
 @inject IHttpClientFactory ClientFactory
 @inject IJSRuntime js
+@inject IWebHostEnvironment env
 @inject NavigationManager navManager
 
 <div class="form-group">
@@ -85,7 +86,7 @@
         fileNewName = e.File.Name;
 
         // Set path for file to be saved to
-        path = Path.Combine(config.GetValue<string>("FileStore")!, fileNewName);
+        path = $"{env.WebRootPath}\\{fileNewName}";
         await using FileStream fs = new(path, FileMode.Create);
         await e.File.OpenReadStream(maxFileSize).CopyToAsync(fs);
 
