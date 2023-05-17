@@ -9,6 +9,7 @@
 @inject NavigationManager navManager
 @inject IConfiguration config
 @inject IJSRuntime js
+@inject IWebHostEnvironment env
 
 <h3>LoyaltyGroupEdit</h3>
 <div class="align-content-center">   
@@ -326,7 +327,7 @@
         string fileNewName = Path.ChangeExtension(Path.GetRandomFileName(), Path.GetExtension(e.File.Name));
 
 
-        string path = Path.Combine(config.GetValue<string>("FileStore")!, fileNewName);
+        string path = $"{env.WebRootPath}\\{fileNewName}";
         await using FileStream fs = new(path, FileMode.Create);
         await e.File.OpenReadStream(maxImageSize).CopyToAsync(fs);
         image = fileNewName;
@@ -365,7 +366,7 @@
         {
             if (image != "placeholder.png")
             {
-                string path = Path.Combine(config.GetValue<string>("FileStore")!, image);
+                string path = $"{env.WebRootPath}\\{image}";
                 File.Delete(path);
             }
         }
