@@ -1,0 +1,189 @@
+﻿@page "/products/csv"
+
+@using L00177784_Project_Ui.Data
+@using System.Data
+@using System.IO
+@using System.Text
+@using Newtonsoft.Json
+@inject IConfiguration config
+@inject IHttpClientFactory ClientFactory
+@inject IJSRuntime js
+@inject NavigationManager navManager
+
+<div class="form-group">
+    <InputFile OnChange="UploadCSV" class="btn btn-light" accept="csv" id="inputFile">
+    </InputFile>
+    <button class="btn btn-light btn-outline-dark mx-4" @onclick="LoadData" hidden="@allowLoad">Load File</button>
+    <btn class="btn btn-light btn-outline-dark mx-2" @onclick="UploadProducts" hidden="@allowSave">Save Products</btn>
+</div>
+
+<div>
+    <table class="table table table-hover align-content-start">
+        <thead>
+            <tr>
+                <td class="px-4">Sku</td>
+                <td class="px-4">Name</td>
+                <td class="px-4">Barcode</td>
+                <td>Group</td>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var currentProduct in csvProducts)
+            {
+                <tr>
+                    <td class="px-4">@currentProduct.sku</td>
+                    <td class="px-4">@currentProduct.name</td>
+                    <td class="px-4">@currentProduct.barcode</td>
+                    <td>@currentProduct.loyaltyGroup_Id</td>                  
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+
+
+@code {
+    /// <summary>
+    /// File size set to 500kb
+    /// </summary>
+    private long maxFileSize = 1024 * 526;
+
+    /// <summary>
+    /// List of products from csv file
+    /// </summary>
+    private List<Product> csvProducts = new List<Product>();
+
+    /// <summary>
+    /// Filename of csv for upload
+    /// </summary>
+    private string fileNewName = string.Empty;
+
+    /// <summary>
+    /// Path for csv file
+    /// </summary>
+    private string path = string.Empty;
+
+    /// <summary>
+    /// Boolean to show or hide Save button
+    /// </summary>
+    private bool allowSave = true;
+
+    /// <summary>
+    /// Boolean to show or hid Load button
+    /// </summary>
+    private bool allowLoad = true;
+
+    /// <summary>
+    /// Uploads file in order to process
+    /// </summary>
+    /// <param name="e">CSV file to upload</param>
+    /// <returns>Task Done</returns>
+    private async Task UploadCSV(InputFileChangeEventArgs e)
+    {
+        fileNewName = e.File.Name;
+
+        // Set path for file to be saved to
+        path = Path.Combine(config.GetValue<string>("FileStore")!, fileNewName);
+        await using FileStream fs = new(path, FileMode.Create);
+        await e.File.OpenReadStream(maxFileSize).CopyToAsync(fs);
+
+        // Show Load button
+        allowLoad = false;
+
+        // Close file stream to allow file to be deleted when processed
+        fs.Close();
+
+    }
+
+    /// <summary>
+    /// Load data from file into a list of products
+    /// </summary>
+    public void LoadData()
+    {   
+        // Open stream reader for file to be read
+        var reader = new StreamReader(File.OpenRead(path));
+
+        // Setting to ignore the first line
+        bool firstRow = true;
+
+        // Loop throug lines in file
+        while (!reader.EndOfStream)
+        {
+            if(firstRow)
+            {
+                var headerLine = reader.ReadLine();
+                firstRow = false;
+            }
+            else
+            {
+                // Read lines and add to product list
+                var line = reader.ReadLine();
+                List<string> productStringList = line.Split(',').ToList();
+                csvProducts.Add(new Product
+                {
+                    barcode = productStringList[0],
+                    sku = Int32.Parse(productStringList[1]),
+                    name = productStringList[2],
+                    loyaltyGroup_Id = Int32.Parse(productStringList[3])
+                });
+            }
+        }
+
+        // Close Stream reader
+        reader.Close();
+
+        // Show Save button
+        allowSave = false;
+
+    }
+
+
+    /// <summary>
+    /// Loop through products to be created and add to database
+    /// </summary>
+    /// <returns>Task Done</returns>
+    private async Task UploadProducts()
+    {
+        foreach(Product newProduct in csvProducts)
+        {
+            await CreateProduct(newProduct);
+        }
+        await js.InvokeVoidAsync("alert", "Products Created");
+        navManager.NavigateTo("/products");
+
+        // Delete csv file once completed
+        File.Delete(path);
+
+    }
+
+    /// <summary>
+    /// API POST call to add products to the databse
+    /// </summary>
+    /// <param name="newProduct"></param>
+    /// <returns></returns>
+    private async Task CreateProduct(Product newProduct)
+    {
+        var request = new HttpRequestMessage(
+                HttpMethod.Post,
+                "https://localhost:7240/api/Products"
+            );
+
+        var client = ClientFactory.CreateClient();
+
+        // Convert new product to json
+        string stringjson = JsonConvert.SerializeObject(newProduct);
+        // Add content including new product to request
+        request.Content = new StringContent(stringjson, Encoding.UTF8, "application/json");
+        // Try to post the new product
+        try
+        {
+            var response = await client.SendAsync(request);
+            response.EnsureSuccessStatusCode();
+        }
+        catch (Exception ex)
+        {
+            await js.InvokeVoidAsync("alert", ex);
+        }
+    }
+}

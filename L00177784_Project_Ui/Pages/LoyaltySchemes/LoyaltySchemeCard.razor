@@ -62,9 +62,15 @@
   </div>
 
 @code {
+    /// <summary>
+    /// Loyalty scheme to selected
+    /// </summary>
     [Parameter]
     public LoyaltyScheme loyaltyScheme { get; set; } = new LoyaltyScheme();
 
+    /// <summary>
+    /// If card is selected user will be brought to edit page for that scheme
+    /// </summary>
     void SelectedScheme()
     {
         navManager.NavigateTo("/loyaltyschemes/edit/" + loyaltyScheme.id);

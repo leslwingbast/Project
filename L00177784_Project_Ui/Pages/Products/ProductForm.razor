@@ -52,13 +52,31 @@
     </div>
 </EditForm>
 @code {
+    /// <summary>
+    /// Product that will be edited or created in the form
+    /// </summary>
     [Parameter] public Product? prod { get; set; }
+
+    /// <summary>
+    /// Parameter to be passed for button text
+    /// </summary>
     [Parameter] public string ButtonText { get; set; } = "Save";
+
+    /// <summary>
+    /// Event to be called when button is clicked
+    /// </summary>
     [Parameter] public EventCallback OnValidSubmit { get; set; }
 
 
+    /// <summary>
+    /// List of loyalty group options to set on a product
+    /// </summary>
     private List<LoyaltyGroup> loyaltyGroups = new List<LoyaltyGroup>();
 
+    /// <summary>
+    /// Populate list of loyalty groups
+    /// </summary>
+    /// <returns>Task Done</returns>
     protected override async Task OnInitializedAsync()
     {
         var request = new HttpRequestMessage(
@@ -83,7 +101,9 @@
         StateHasChanged();
     }
 
-
+    /// <summary>
+    /// Return to products page if cancel is pressed
+    /// </summary>
     private void Cancel()
     {
         navManager.NavigateTo("/products");

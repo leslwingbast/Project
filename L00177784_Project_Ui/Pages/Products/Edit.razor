@@ -21,16 +21,32 @@
 </div>
 
 @code {
+    /// <summary>
+    /// Parameter for product id
+    /// </summary>
     [Parameter]
     public int productId { get; set; }
 
+    /// <summary>
+    /// New Product to store editing details
+    /// </summary>
     private Product editProduct = new Product();
 
+
+    /// <summary>
+    /// Load product information on initialisation
+    /// </summary>
+    /// <returns>Task done</returns>
     protected override async Task OnInitializedAsync()
     {
         await GetProduct(productId);
     }
 
+    /// <summary>
+    /// Call to get product information
+    /// </summary>
+    /// <param name="productId"></param>
+    /// <returns>Task Done</returns>
     private async Task GetProduct(int productId)
     {
         string endpoint = "https://localhost:7240/api/Products/" + productId;
@@ -56,6 +72,10 @@
         }
     }
 
+    /// <summary>
+    /// Call to update the edited product
+    /// </summary>
+    /// <returns>Task Done</returns>
     private async Task EditProduct()
     {
         // Check if name is populated and show error if not
@@ -99,8 +119,13 @@
         }
     }
 
+    /// <summary>
+    /// Delete product from database
+    /// </summary>
+    /// <returns>Task Done</returns>
     private async Task DeleteProduct()
     {
+        // Warning to ensure product should be deleted
         bool confirmed = await js.InvokeAsync<bool>("confirm", $"Are you sure you want to delete {editProduct.name}?");
         if (confirmed)
         {
@@ -113,7 +138,8 @@
 
             var response = await client.SendAsync(request);
             response.EnsureSuccessStatusCode();
-            await js.InvokeVoidAsync("alert", "Product has been deleted");
+
+            // Return to products page once delted
             navManager.NavigateTo("/products");
         }
         else

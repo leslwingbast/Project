@@ -52,7 +52,7 @@ else
                 </div>
             
             <div class="row my-1">
-                <button type="submit" class="btn col-sm mt-4 mx-1 btn-success">Submit</button>
+                <button type="submit" class="btn col-sm mt-4 mx-1 btn-success">Save Changes</button>
                 <div type="submit" class="btn btn-warning col-sm mt-4 mx-1" @onclick="Cancel">Cancel</div>
                 <div type="submit" class="btn btn-danger col-sm mt-4 mx-1" @onclick="DeleteLoyaltyScheme">Delete</div>
             </div>
@@ -64,16 +64,47 @@ else
 
 
 @code {
+    /// <summary>
+    /// Id of scheme to be edited
+    /// </summary>
     [Parameter]
     public int schemeId { get; set; }
+
+    /// <summary>
+    /// Loyalty scheme that will hold edit information
+    /// </summary>
     private LoyaltyScheme editLoyaltyScheme = new LoyaltyScheme();
+
+    /// <summary>
+    /// Loyalty Group for scheme to show image and threshold
+    /// </summary>
     private LoyaltyGroup connectedLoytaltyGroup = new LoyaltyGroup();
+
+    /// <summary>
+    /// Endpoint for loyalty scheme
+    /// </summary>
     private string schemeEndpoint { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Endpoint for Loyalty Group
+    /// </summary>
     private string groupEndpoint { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Store stars to allow user friendly way of changing items purchased
+    /// </summary>
     private double stars { get; set; }
+
+    /// <summary>
+    /// Stores the max number of stars that can be selected
+    /// </summary>
     private int max { get; set; }
 
 
+    /// <summary>
+    /// Sets the endpoint for the loyalty scheme and calls GetSheme method
+    /// </summary>
+    /// <returns></returns>
     protected override async Task OnInitializedAsync()
     {
         schemeEndpoint = string.Concat(config.GetValue<string>("BaseApiUrl")!, "/loyaltyschemes/", schemeId.ToString());
@@ -81,6 +112,11 @@ else
 
     }
 
+    /// <summary>
+    /// Loads the loyalty scheme to be edited
+    /// </summary>
+    /// <param name="schemeId"></param>
+    /// <returns></returns>
     private async Task GetScheme(int schemeId)
     {
         var client = ClientFactory.CreateClient();
@@ -98,9 +134,17 @@ else
             var responseData = await response.Content.ReadAsStringAsync();
 
             editLoyaltyScheme = JsonConvert.DeserializeObject<LoyaltyScheme>(responseData)!;
+
+            // Sets the endpoint for the loyalty group relating to scheme
             groupEndpoint = string.Concat(config.GetValue<string>("BaseApiUrl")!, "/loyaltygroups/", editLoyaltyScheme.loyaltyGroup_Id.ToString());
+
+            // Call mehtod to update the loyalty connected group
             await UpdateConnectedLoyaltyGroup(groupEndpoint);
+
+            // Set the current items purchased
             stars = (double)editLoyaltyScheme.loyaltyGroup!.threshold! - editLoyaltyScheme.remainingItems;
+
+            // Set the max stars that can be selected
             max = (int)editLoyaltyScheme.loyaltyGroup.threshold;
         }
         else
@@ -109,6 +153,11 @@ else
         }
     }
 
+    /// <summary>
+    /// Gets and updates the connected loyalty group
+    /// </summary>
+    /// <param name="endpoint"></param>
+    /// <returns></returns>
     private async Task UpdateConnectedLoyaltyGroup(string endpoint)
     {
         var groupClient = ClientFactory.CreateClient();
@@ -132,6 +181,10 @@ else
         }
     }
 
+    /// <summary>
+    /// Call to update the scheme
+    /// </summary>
+    /// <returns></returns>
     private async Task EditLoyaltyScheme()
     {
         var request = new HttpRequestMessage(
@@ -152,12 +205,20 @@ else
         navManager.NavigateTo("/loyaltyschemes");
     }
 
+    /// <summary>
+    /// Updates the loyalty scheme with a change in the stars
+    /// </summary>
+    /// <param name="val"></param>
     private void OnValueChanged(double val)
     {
         stars = val;
         editLoyaltyScheme.remainingItems = (int)editLoyaltyScheme.loyaltyGroup!.threshold! - (int)stars;
     }
 
+    /// <summary>
+    /// Updates the loyalty scheme with the change in remaining items
+    /// </summary>
+    /// <param name="e"></param>
     private void UpdateStars(ChangeEventArgs e)
     {
         editLoyaltyScheme.remainingItems = int.Parse(e.Value!.ToString()!);
@@ -173,10 +234,17 @@ else
         navManager.NavigateTo("/loyaltyschemes");
     }
 
+    /// <summary>
+    /// Deleted the loyalty scheme
+    /// </summary>
+    /// <returns></returns>
     private async Task DeleteLoyaltyScheme()
     {
 
+        // Confirmation required to delete the loyalty scheme
         bool confirmed = await js.InvokeAsync<bool>("confirm", $"Are you sure you want to delete the loyalty scheme for {editLoyaltyScheme.customerId}?");
+        
+        // If confirmed the call to delte will happen
         if (confirmed)
         {
             var groupClient = ClientFactory.CreateClient();
@@ -193,6 +261,7 @@ else
                 navManager.NavigateTo("/loyaltyschemes");
             }
         }
+        // If canceled the scheme will not be deleted and user will be retured to loyalty schemes page
         else
         {
             navManager.NavigateTo("/loyaltyschemes");
