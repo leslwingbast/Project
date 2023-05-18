@@ -69,10 +69,31 @@
     public LoyaltyScheme loyaltyScheme { get; set; } = new LoyaltyScheme();
 
     /// <summary>
+    /// Check authorisatin state to allow editing of scheme
+    /// </summary>
+    [CascadingParameter] protected Task<AuthenticationState>? AuthStat { get; set; }
+
+    /// <summary>
+    /// User if authorised
+    /// </summary>
+    private System.Security.Claims.ClaimsPrincipal? user { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+        base.OnInitialized();
+        user = (await AuthStat!).User;
+    }
+
+
+    /// <summary>
     /// If card is selected user will be brought to edit page for that scheme
     /// </summary>
     void SelectedScheme()
     {
-        navManager.NavigateTo("/loyaltyschemes/edit/" + loyaltyScheme.id);
+        if (user!.Identity!.IsAuthenticated)
+        {
+            navManager.NavigateTo("/loyaltyschemes/edit/" + loyaltyScheme.id);
+        }      
+        
     }
 }

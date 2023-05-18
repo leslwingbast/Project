@@ -1,0 +1,112 @@
+﻿@page "/"
+@page "/loyaltyschemes/customer"
+
+@using Data
+@using System.Text.Json
+@using System.Text.Json.Serialization
+@inject NavigationManager navManager
+@inject IConfiguration config
+@inject IHttpClientFactory ClientFactory
+@inject IJSRuntime js
+
+<h3>Customer Schemes</h3>
+
+<div class="col-lg-4 col mx-auto">
+    
+    <div class="container alert-secondary p-4 col-6 mx-auto" style="min-width: 300px;">
+        
+            <div class="row mb-2">
+                <label>Please Enter Customer Number</label>
+                <input type="text" @bind=@customerNumber clss="col-12" placeholder="Enter Customer Number"/>
+            </div>
+       
+            <div class="row mt-4 align-content-center px-4">
+                <div class="btn btn-success mx-auto mx-3 px-3" @onclick="GetCustomerSchemes">Submit</div>
+            </div>
+        
+    </div>
+
+</div>
+
+@code {
+    /// <summary>
+    /// Customer Id to be submited
+    /// </summary>
+    private int customer_id;
+
+    /// <summary>
+    /// Binding customer number as string in order to show placeholder
+    /// </summary>
+    private string customerNumber = string.Empty;
+
+
+    /// <summary>
+    /// Lost of schemes to check if customer has schemes
+    /// </summary>
+    private List<LoyaltyScheme>? allLoyaltySchemes = new List<LoyaltyScheme>();
+
+    /// <summary>
+    /// Loyalty scheme endpoint
+    /// </summary>
+    private string allLoyaltySchemeEndpoint = string.Empty;
+
+    /// <summary>
+    /// On initialisation get loyaltyschemes to check if customer is part of any
+    /// </summary>
+    /// <returns></returns>
+    protected override async Task OnInitializedAsync()
+    {
+        allLoyaltySchemeEndpoint = string.Concat(config.GetValue<string>("BaseApiUrl")!, "/loyaltyschemes");
+        await LoyaltySchemeApiCall();
+    }
+
+    /// <summary>
+    /// API call for loyalty schemes
+    /// </summary>
+    /// <returns></returns>
+    private async Task LoyaltySchemeApiCall()
+    {
+        var request = new HttpRequestMessage(
+                                HttpMethod.Get,
+                               allLoyaltySchemeEndpoint
+                            );
+
+        var client = ClientFactory.CreateClient();
+
+        var response = await client.SendAsync(request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var stream = await response.Content.ReadAsStreamAsync();
+            allLoyaltySchemes = await JsonSerializer.DeserializeAsync<List<LoyaltyScheme>>(stream);
+
+        }
+        else
+        {
+            await js.InvokeVoidAsync("alert", "There was a prolem retrieving the loyalty groups");
+        }
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Checks if the customer has a scheme and brings them to the page to view
+    /// </summary>
+    private void GetCustomerSchemes()
+    {
+        customer_id = Int32.Parse(customerNumber);
+
+        foreach (LoyaltyScheme loyaltyScheme in allLoyaltySchemes!)
+        {
+            if (loyaltyScheme.customerId == customer_id)
+            {
+                navManager.NavigateTo("/loyaltyschemes/customer/" + customer_id);
+                break;
+            }
+            else
+            {
+                js.InvokeVoidAsync("alert", "Customer is not part of any loyalty schemes");
+            }
+        }
+        
+    }
+}

@@ -1,6 +1,4 @@
-﻿using System.ComponentModel;
-
-namespace L00177784_Project_Ui.Data
+﻿namespace L00177784_Project_Ui.Data
 {
     public class LoyaltyScheme
     {
