@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace L00177784_Project.Migrations
 {
     [DbContext(typeof(LoyaltyGroupsContext))]
-    [Migration("20230427130857_AddSalesModel")]
-    partial class AddSalesModel
+    [Migration("20230518105504_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -60,7 +60,7 @@ namespace L00177784_Project.Migrations
                     b.Property<int?>("LoyaltyGroup_Id")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("RemainingItems")
+                    b.Property<int>("RemainingItems")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
@@ -112,6 +112,9 @@ namespace L00177784_Project.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("IsFree")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("Processed")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("Qty")

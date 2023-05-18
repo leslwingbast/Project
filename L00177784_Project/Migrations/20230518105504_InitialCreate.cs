@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -26,13 +27,32 @@ namespace L00177784_Project.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Sales",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    DateTime = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    Sku = table.Column<int>(type: "INTEGER", nullable: true),
+                    Barcode = table.Column<string>(type: "TEXT", nullable: true),
+                    CustomerId = table.Column<int>(type: "INTEGER", nullable: false),
+                    IsFree = table.Column<bool>(type: "INTEGER", nullable: false),
+                    Qty = table.Column<int>(type: "INTEGER", nullable: false),
+                    Processed = table.Column<bool>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Sales", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "LoyaltySchemes",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     GroupName = table.Column<string>(type: "TEXT", nullable: false),
-                    RemainingItems = table.Column<int>(type: "INTEGER", nullable: true),
+                    RemainingItems = table.Column<int>(type: "INTEGER", nullable: false),
                     LastFreeBag = table.Column<DateTime>(type: "TEXT", nullable: true),
                     CustomerId = table.Column<int>(type: "INTEGER", nullable: false),
                     LoyaltyGroup_Id = table.Column<int>(type: "INTEGER", nullable: true)
@@ -87,6 +107,9 @@ namespace L00177784_Project.Migrations
 
             migrationBuilder.DropTable(
                 name: "Products");
+
+            migrationBuilder.DropTable(
+                name: "Sales");
 
             migrationBuilder.DropTable(
                 name: "LoyaltyGroups");
