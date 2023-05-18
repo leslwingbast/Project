@@ -38,14 +38,14 @@ else
                         </div>
                     </div>
                 }
-                <div class="row-1 my-1">
-                    <div class="form-group col">
+                <div class="row my-1">
+                
+                    <div class="form-group col-4">
                         <label for="name">Remaining Items:</label>
                         <input type="number" class="form-control" value="@editLoyaltyScheme.remainingItems" @onchange="UpdateStars">
                     </div>
-                </div>
-                <div class="row-1 my-1">
-                    <div class="form-group col">
+                
+                    <div class="form-group col-8">
                         <label for="name">Loyalty Scheme:</label>
                         <Rate Value="@stars" ValueChanged="@OnValueChanged" Max="@max"/>
                     </div>
