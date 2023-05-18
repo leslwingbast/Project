@@ -121,7 +121,7 @@
             {
                 // Read lines and add to product list
                 var line = reader.ReadLine();
-                    List<string> productStringList = line.Split(',').ToList();
+                    List<string> productStringList = line!.Split(',').ToList();
                 csvProducts.Add(new Product
                 {
                     barcode = productStringList[0],

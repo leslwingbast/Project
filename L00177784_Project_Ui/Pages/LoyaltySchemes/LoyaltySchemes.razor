@@ -1,5 +1,4 @@
-﻿@page "/"
-@page "/loyaltyschemes"
+﻿@page "/loyaltyschemes"
 
 @using Data
 @using System.Text.Json
@@ -22,7 +21,7 @@
 </div>
 
 <div class="row">
-    @foreach(var scheme in allLoyaltySchemes)
+    @foreach(var scheme in allLoyaltySchemes!)
     {
         if (!IsVisible(scheme))
             continue;
@@ -31,14 +30,40 @@
 </div>
 
 @code {
-    private List<LoyaltyScheme> allLoyaltySchemes = new List<LoyaltyScheme>();
+    /// <summary>
+    /// List of all loyalty schemes
+    /// </summary>
+    private List<LoyaltyScheme>? allLoyaltySchemes = new List<LoyaltyScheme>();
+
+    /// <summary>
+    /// List for filtering loyalty schemes while typing
+    /// </summary>
     private List<LoyaltyScheme> filteredLoyaltySchemes = new List<LoyaltyScheme>();
-    private List<LoyaltyGroup> allLoyaltyGroups = new List<LoyaltyGroup>();
+
+    /// <summary>
+    /// List of all loyalty groups
+    /// </summary>
+    private List<LoyaltyGroup>? allLoyaltyGroups = new List<LoyaltyGroup>();
+
+    /// <summary>
+    /// Endpoint for loyalty groups
+    /// </summary>
     private string allLoyaltyGroupsEndpoint = string.Empty;
+
+    /// <summary>
+    /// Endpoint for loyalty schems
+    /// </summary>
     private string allLoyaltySchemeEndpoint = string.Empty;
+
+    /// <summary>
+    /// Input text to filter
+    /// </summary>
     private string filterLoyaltyScheme = string.Empty;
 
-
+    /// <summary>
+    /// On initialistion load loyalty schemes and groups
+    /// </summary>
+    /// <returns></returns>
     protected override async Task OnInitializedAsync()
     {
 
@@ -46,10 +71,14 @@
         allLoyaltySchemeEndpoint = string.Concat(config.GetValue<string>("BaseApiUrl")!, "/loyaltyschemes");
         await LoyaltyGroupApiCall();
         await LoyaltySchemeApiCall();
-        filteredLoyaltySchemes = allLoyaltySchemes;
+        filteredLoyaltySchemes = allLoyaltySchemes!;
 
     }
 
+    /// <summary>
+    /// API call to get loyalty groups
+    /// </summary>
+    /// <returns></returns>
     private async Task LoyaltyGroupApiCall()
     {
         var request = new HttpRequestMessage(
@@ -73,6 +102,10 @@
         StateHasChanged();
     }
 
+    /// <summary>
+    /// API call for loyalty schemes
+    /// </summary>
+    /// <returns></returns>
     private async Task LoyaltySchemeApiCall()
     {
         var request = new HttpRequestMessage(
@@ -89,9 +122,10 @@
             var stream = await response.Content.ReadAsStreamAsync();
             allLoyaltySchemes = await JsonSerializer.DeserializeAsync<List<LoyaltyScheme>>(stream);
 
+            // Attach loytalty groups to each scheme
             foreach(LoyaltyScheme loyaltyScheme in allLoyaltySchemes!)
             {
-                loyaltyScheme.loyaltyGroup = allLoyaltyGroups.FirstOrDefault(x => x.id == loyaltyScheme.loyaltyGroup_Id);
+                loyaltyScheme.loyaltyGroup = allLoyaltyGroups!.FirstOrDefault(x => x.id == loyaltyScheme.loyaltyGroup_Id);
             }
         }
         else
@@ -101,13 +135,20 @@
         StateHasChanged();
     }
 
+    /// <summary>
+    /// If scheme is selected go to edit page of that scheme
+    /// </summary>
+    /// <param name="selectedScheme"></param>
+    //private void SelectedScheme(LoyaltyScheme selectedScheme)
+    //{
+    //    navManager.NavigateTo("/loyaltyscheme/edit/" + selectedScheme.id);
+    //}
 
-    private void SelectedScheme(LoyaltyScheme selectedScheme)
-    {
-        navManager.NavigateTo("/loyaltyscheme/edit/" + selectedScheme.id);
-    }
-
-
+    /// <summary>
+    /// Check whether shceme should be show or not
+    /// </summary>
+    /// <param name="loyaltySchemeSearch"></param>
+    /// <returns>True if matching search criteria</returns>
     private bool IsVisible(LoyaltyScheme loyaltySchemeSearch)
     {
         if (string.IsNullOrEmpty(filterLoyaltyScheme))

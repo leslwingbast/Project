@@ -1,0 +1,108 @@
+﻿@page "/loyaltyschemes/customer/{customerId:int}"
+
+@using Data
+@using System.Text.Json
+@using System.Text.Json.Serialization
+@inject IConfiguration config
+@inject IHttpClientFactory ClientFactory
+@inject IJSRuntime js
+
+<h3>Customer - @customerId</h3>
+
+<div class="row">
+    @foreach (var scheme in customerSchemes!)
+    {
+       <LoyaltySchemeCard loyaltyScheme="scheme"/>
+    }
+</div>
+
+@code {
+    /// <summary>
+    /// Parameter passed in with customer's Id'
+    /// </summary>
+    [Parameter]
+    public int customerId { get; set; }
+
+    /// <summary>
+    /// List of schemes belonging to that customer
+    /// </summary>
+    private List<LoyaltyScheme>? customerSchemes = new List<LoyaltyScheme>();
+
+
+    /// <summary>
+    /// List of loyalty groups to connect to shemes
+    /// </summary>
+    private List<LoyaltyGroup>? allLoyaltyGroups = new List<LoyaltyGroup>();
+
+    /// <summary>
+    /// Enpoint for getting customer's loyalty schemes
+    /// </summary>
+    private string customerSchemesEndpoint = string.Empty;
+
+
+    /// <summary>
+    /// Endpoint for loyalty groups
+    /// </summary>
+    private string allLoyaltyGroupsEndpoint = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {      
+        customerSchemesEndpoint = string.Concat(config.GetValue<string>("BaseApiUrl")!, "/loyaltyschemes/customer/", customerId);
+        allLoyaltyGroupsEndpoint = string.Concat(config.GetValue<string>("BaseApiUrl")!, "/loyaltygroups");
+        await LoyaltyGroupApiCall();
+        await CustomerLoyaltySchemesApiCall();
+    }
+
+    private async Task CustomerLoyaltySchemesApiCall()
+    {
+        var request = new HttpRequestMessage(
+                                HttpMethod.Get,
+                               customerSchemesEndpoint
+                            );
+
+        var client = ClientFactory.CreateClient();
+
+        var response = await client.SendAsync(request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var stream = await response.Content.ReadAsStreamAsync();
+            customerSchemes = await JsonSerializer.DeserializeAsync<List<LoyaltyScheme>>(stream);
+
+            foreach (LoyaltyScheme loyaltyScheme in customerSchemes!)
+            {
+                loyaltyScheme.loyaltyGroup = allLoyaltyGroups!.FirstOrDefault(x => x.id == loyaltyScheme.loyaltyGroup_Id);
+            }
+        }
+        else
+        {
+            await js.InvokeVoidAsync("alert", "There was a prolem retrieving the loyalty groups");
+        }
+        StateHasChanged();
+    }
+
+    private async Task LoyaltyGroupApiCall()
+    {
+        var request = new HttpRequestMessage(
+                        HttpMethod.Get,
+                        allLoyaltyGroupsEndpoint
+                    );
+
+        var client = ClientFactory.CreateClient();
+
+        var response = await client.SendAsync(request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var stream = await response.Content.ReadAsStreamAsync();
+            allLoyaltyGroups = await JsonSerializer.DeserializeAsync<List<LoyaltyGroup>>(stream);
+        }
+        else
+        {
+            await js.InvokeVoidAsync("alert", "There was a prolem retrieving the loyalty groups");
+        }
+        StateHasChanged();
+    }
+
+}
+

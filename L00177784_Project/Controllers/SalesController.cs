@@ -1,7 +1,6 @@
 ﻿using L00177784_Project.Data;
 using L00177784_Project.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace L00177784_Project.Controllers
 {

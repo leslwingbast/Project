@@ -1,7 +1,4 @@
-﻿
-using System.Text.Json.Serialization;
-
-namespace L00177784_Project_Ui.Data
+﻿namespace L00177784_Project_Ui.Data
 {
     public class Product
     {
