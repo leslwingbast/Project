@@ -57,7 +57,7 @@ namespace L00177784_Project.Migrations
                     b.Property<int?>("LoyaltyGroup_Id")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("RemainingItems")
+                    b.Property<int>("RemainingItems")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
