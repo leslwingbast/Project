@@ -10,10 +10,13 @@
 
 <div class="row">
     <div class="col">
-        <h3>LoyaltySchemes</h3>
+        <h3>Loyalty Schemes</h3>
     </div>
     <div class="col align-self-center">
-            <input class="input-group col-12" type="text"  placeholder="Search by customer number" style="min-width:20em"
+            <input class="input-group col-12" 
+                    type="text"  
+                    placeholder="Search by customer number" 
+                    style="min-width:20em"
                @bind="filterLoyaltyScheme"
                @bind:event="oninput" />
         </div>
@@ -156,7 +159,8 @@
             return true;
         }
 
-        if (loyaltySchemeSearch.customerId.ToString()!.Contains(filterLoyaltyScheme, StringComparison.OrdinalIgnoreCase))
+        if (loyaltySchemeSearch.customerId.ToString()!
+            .Contains(filterLoyaltyScheme, StringComparison.OrdinalIgnoreCase))
         {
             return true;
         }
