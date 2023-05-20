@@ -309,7 +309,7 @@ namespace L00177784_Project.Controllers
         /// <returns>True if product can be found</returns>
         private bool CheckProductByBarcode(string barcode)
         {
-            if (_context.Products.First(x => x.Barcode == barcode) != null)
+            if (_context.Products.FirstOrDefault(x => x.Barcode == barcode) != null)
             {
                 return true;
             }
