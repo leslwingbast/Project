@@ -94,19 +94,25 @@
     private void GetCustomerSchemes()
     {
         customer_id = Int32.Parse(customerNumber);
+        bool exists = false;
 
         foreach (LoyaltyScheme loyaltyScheme in allLoyaltySchemes!)
         {
             if (loyaltyScheme.customerId == customer_id)
             {
-                navManager.NavigateTo("/loyaltyschemes/customer/" + customer_id);
+                exists = true;
                 break;
             }
-            else
-            {
-                js.InvokeVoidAsync("alert", "Customer is not part of any loyalty schemes");
-            }
         }
-        
+        if (exists == true)
+        {
+            navManager.NavigateTo("/loyaltyschemes/customer/" + customer_id);
+        }
+        else
+        {
+            js.InvokeVoidAsync("alert", "This customer does not have any loyalty schemes");
+        }
+
     }
+
 }
