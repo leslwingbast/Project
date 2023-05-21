@@ -5,6 +5,7 @@
 @using System.Text.Json.Serialization
 @inject IHttpClientFactory ClientFactory
 @inject NavigationManager navManager
+@inject IJSRuntime js
 
 <div class="row">
     <div class="col-sm-12 col-lg">
@@ -122,8 +123,7 @@ else
         }
         else
         {
-            // TODO: Handle error - display message
-            System.Console.WriteLine("Something went wrong - Please try again later...");
+            await js.InvokeVoidAsync("alert", "There was a prolem retrieving the loyalty groups");
         }
         StateHasChanged();
     }

@@ -6,6 +6,7 @@
 @inject IHttpClientFactory ClientFactory
 @inject NavigationManager navManager
 @inject IJSRuntime js
+@inject IConfiguration config
 
 
 <h3>New Product</h3>
@@ -20,6 +21,21 @@
     /// New instance of product populated within form
     /// </summary>
     private Product newProduct { get; set; } = new Product();
+
+    /// <summary>
+    /// Endpoint for createing a new product
+    /// </summary>
+    private string allProductsEndPoint = string.Empty;
+
+    /// <summary>
+    /// Set the endpoing for the POST method
+    /// </summary>
+    protected override void OnInitialized()
+    {
+        allProductsEndPoint = string.Concat(config.GetValue<string>("BaseApiUrl")!, "/products");
+    }
+
+
 
     /// <summary>
     /// Create a new product product
@@ -42,7 +58,7 @@
         {
             var request = new HttpRequestMessage(
                 HttpMethod.Post,
-                "https://localhost:7240/api/Products"
+               allProductsEndPoint
             );
 
             var client = ClientFactory.CreateClient();
@@ -56,7 +72,8 @@
             {
                 var response = await client.SendAsync(request);
                 response.EnsureSuccessStatusCode();
-                Console.WriteLine(await response.Content.ReadAsStringAsync());
+                await js.InvokeVoidAsync("alert", "Product has been created");
+                
             }
             catch (Exception ex)
             {

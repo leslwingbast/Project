@@ -7,6 +7,7 @@
 @inject IHttpClientFactory ClientFactory
 @inject NavigationManager navManager
 @inject IJSRuntime js
+@inject IConfiguration config
 
 
 <h3>New Product</h3>
@@ -32,6 +33,7 @@
     /// </summary>
     private Product editProduct = new Product();
 
+    string editProductEndpoint = string.Empty;
 
     /// <summary>
     /// Load product information on initialisation
@@ -39,6 +41,7 @@
     /// <returns>Task done</returns>
     protected override async Task OnInitializedAsync()
     {
+        editProductEndpoint = string.Concat(config.GetValue<string>("BaseApiUrl")!, "/products/");
         await GetProduct(productId);
     }
 
@@ -49,7 +52,7 @@
     /// <returns>Task Done</returns>
     private async Task GetProduct(int productId)
     {
-        string endpoint = "https://localhost:7240/api/Products/" + productId;
+        string endpoint = editProductEndpoint + productId;
 
         var client = ClientFactory.CreateClient();
 
@@ -91,7 +94,7 @@
         // Edit the product
         else
         {
-            string endpoint = "https://localhost:7240/api/Products/" + productId;
+            string endpoint = editProductEndpoint + productId;
             var request = new HttpRequestMessage(
                 HttpMethod.Put,
                 endpoint
@@ -129,7 +132,7 @@
         bool confirmed = await js.InvokeAsync<bool>("confirm", $"Are you sure you want to delete {editProduct.name}?");
         if (confirmed)
         {
-            string endpoint = "https://localhost:7240/api/Products/" + productId;
+            string endpoint = editProductEndpoint + productId;
             var request = new HttpRequestMessage(
                 HttpMethod.Delete,
                 endpoint
